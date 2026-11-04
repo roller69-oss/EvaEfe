@@ -56,8 +56,11 @@ export default function Curso() {
       <Aviso error={error} onCerrar={() => setError("")} />
       <Link to="/" className="volver">‹ Mis cursos</Link>
       <div className="fila">
-        <CampoEditable className="in titulo" valor={curso.nombre} aria-label="Nombre del curso"
-          onGuardar={v => guardar("cursos", id, { nombre: v.trim() || curso.nombre }, () => setCurso({ ...curso, nombre: v.trim() || curso.nombre }))} />
+        <label className="editable-nombre">
+          <span className="pista">Nombre del curso (toca para cambiarlo)</span>
+          <CampoEditable className="in titulo" valor={curso.nombre} aria-label="Nombre del curso"
+            onGuardar={v => guardar("cursos", id, { nombre: v.trim() || curso.nombre }, () => setCurso({ ...curso, nombre: v.trim() || curso.nombre }))} />
+        </label>
         <span className="chip">{curso.etapa === "BACH" ? "Bachillerato" : curso.etapa}</span>
       </div>
       <p className="muted" style={{ margin: 0 }}>Los contenidos, rúbricas y porcentajes de aquí son los mismos para todos los grupos de {curso.nombre}.</p>

@@ -93,7 +93,7 @@ npm run dev              # http://localhost:5173
 - [x] Acceso con Google, base de datos y seguridad
 - [x] Cursos, grupos y alumnos (pegar lista desde Rayuela)
 - [x] Contenidos por evaluación: rúbricas con ítems y pesos, nota directa, datos que solo se anotan, redondeo por curso
-- [ ] Poner notas desde el móvil (botones 0–5, trabajo compensatorio, exento, NP)
-- [ ] Tablas de 1ª, 2ª, 3ª y final con nota real y de boletín, ajustes manuales
-- [ ] Exportar a Excel
+- [x] Poner notas desde el móvil (botones 0–5, trabajo compensatorio, exento, NP, datos anotados)
+- [x] Tablas de 1ª, 2ª, 3ª y final con nota real y de boletín, ajustes manuales
+- [x] Exportar a Excel (CSV)
 - [ ] Estadísticas por grupo y curso
