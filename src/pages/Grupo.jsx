@@ -5,8 +5,9 @@ import { Aviso, Cargando } from "../components/ui.jsx";
 import PonerNotas from "./grupo/PonerNotas.jsx";
 import Tablas from "./grupo/Tablas.jsx";
 import Alumnos from "./grupo/Alumnos.jsx";
+import Competencias from "./grupo/Competencias.jsx";
 
-const PESTANAS = [["notas", "Poner notas"], ["tablas", "Tablas"], ["alumnos", "Alumnos"]];
+const PESTANAS = [["notas", "Poner notas"], ["tablas", "Tablas"], ["competencias", "Competencias"], ["alumnos", "Alumnos"]];
 
 function leer(k, def) { try { return localStorage.getItem(k) || def; } catch { return def; } }
 function escribir(k, v) { try { localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } }
@@ -43,6 +44,7 @@ export default function Grupo() {
         ? <PonerNotas g={g} />
         : <div className="vacio"><p>{curso.nombre} todavía no tiene contenidos. <Link to={`/curso/${curso.id}`}>Créalos en el curso</Link> y aparecerán en todos sus grupos.</p></div>)}
       {tabActiva === "tablas" && <Tablas g={g} />}
+      {tabActiva === "competencias" && <Competencias g={g} />}
       {tabActiva === "alumnos" && <Alumnos g={g} />}
     </>
   );

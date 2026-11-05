@@ -5,6 +5,7 @@ import Login from "./pages/Login.jsx";
 import Inicio from "./pages/Inicio.jsx";
 import Curso from "./pages/Curso.jsx";
 import Grupo from "./pages/Grupo.jsx";
+import Criterios from "./pages/Criterios.jsx";
 
 export default function App() {
   const [sesion, setSesion] = useState(undefined); // undefined = comprobando
@@ -53,6 +54,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Inicio />} />
           <Route path="/curso/:id" element={<Curso />} />
+          <Route path="/curso/:id/criterios" element={<Criterios />} />
           <Route path="/grupo/:id" element={<Grupo />} />
           <Route path="*" element={<Inicio />} />
         </Routes>

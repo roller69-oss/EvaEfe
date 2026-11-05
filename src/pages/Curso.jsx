@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase, q, mensajeError } from "../lib/supabase.js";
 import { fmt } from "../lib/calc.js";
+import { compararCodigo, enlaces } from "../lib/criterios.js";
 import { Aviso, BotonBorrar, CampoEditable, Cargando, numero } from "../components/ui.jsx";
 
 const EVALS = [1, 2, 3];
@@ -16,6 +17,7 @@ export default function Curso() {
   const [ev, setEv] = useState(1);
   const [abierto, setAbierto] = useState(null);
   const [error, setError] = useState("");
+  const [criterios, setCriterios] = useState([]);
 
   async function cargar() {
     try {
@@ -26,6 +28,9 @@ export default function Curso() {
       ]);
       cs.forEach(x => x.items.sort((a, b) => a.orden - b.orden));
       setCurso(c); setGrupos(g); setContenidos(cs);
+      // Criterios: si aún no se ha ejecutado 02_criterios.sql, la sección no aparece
+      const { data: crs } = await supabase.from("criterios").select("id, codigo, descripcion").eq("curso_id", id);
+      setCriterios((crs || []).sort((a, b) => compararCodigo(a.codigo, b.codigo)));
     } catch (e) { setError(mensajeError(e)); }
   }
   useEffect(() => { cargar(); }, [id]);
@@ -40,7 +45,7 @@ export default function Curso() {
   async function nuevoContenido(tipo) {
     try {
       const orden = contenidos.length;
-      const [c] = await q(supabase.from("contenidos").insert({ curso_id: id, evaluacion: ev, nombre: tipo === "nota" ? "Teórico" : "Nuevo contenido", tipo, peso: 0, orden }).select("*, items(*)"));
+      const [c] = await q(supabase.from("contenidos").insert({ curso_id: id, evaluacion: ev, nombre: tipo === "nota" ? "Teórico" : tipo === "diario" ? "Trabajo diario" : "Nuevo contenido", tipo, peso: 0, orden }).select("*, items(*)"));
       setContenidos(cs => [...cs, c]); setAbierto(c.id);
     } catch (e) { setError(mensajeError(e)); }
   }
@@ -63,7 +68,10 @@ export default function Curso() {
         </label>
         <span className="chip">{curso.etapa === "BACH" ? "Bachillerato" : curso.etapa}</span>
       </div>
-      <p className="muted" style={{ margin: 0 }}>Los contenidos, rúbricas y porcentajes de aquí son los mismos para todos los grupos de {curso.nombre}.</p>
+      <div className="fila">
+        <p className="muted" style={{ margin: 0, flex: "1 1 260px" }}>Los contenidos, rúbricas y porcentajes de aquí son los mismos para todos los grupos de {curso.nombre}.</p>
+        <Link className="btn" to={`/curso/${id}/criterios`}>Criterios y competencias</Link>
+      </div>
 
       <section className="bloque">
         <div className="fila">
@@ -99,6 +107,7 @@ export default function Curso() {
               guardar={(cambios) => guardar("contenidos", c.id, cambios, () => setCont(c.id, x => ({ ...x, ...cambios })))}
               setCont={fn => setCont(c.id, fn)}
               setError={setError}
+              criterios={criterios}
               onBorrar={async () => {
                 try { await q(supabase.from("contenidos").delete().eq("id", c.id)); setContenidos(cs => cs.filter(x => x.id !== c.id)); }
                 catch (e) { setError(mensajeError(e)); }
@@ -108,6 +117,7 @@ export default function Curso() {
         <div className="fila">
           <button className="btn primario" onClick={() => nuevoContenido("rubrica")}>+ Rúbrica</button>
           <button className="btn" onClick={() => nuevoContenido("nota")}>+ Nota directa</button>
+          <button className="btn" onClick={() => nuevoContenido("diario")}>+ Diario</button>
         </div>
       </section>
 
@@ -153,7 +163,7 @@ export default function Curso() {
   );
 }
 
-function EditorContenido({ c, abierto, onAlternar, guardar, setCont, setError, onBorrar }) {
+function EditorContenido({ c, abierto, onAlternar, guardar, setCont, setError, onBorrar, criterios }) {
   const anot = Array.isArray(c.anotaciones) ? c.anotaciones : [];
   const sumaItems = c.items.reduce((a, i) => a + Number(i.peso || 0), 0);
 
@@ -172,12 +182,15 @@ function EditorContenido({ c, abierto, onAlternar, guardar, setCont, setError, o
     catch (e) { setError(mensajeError(e)); }
   }
   const guardarAnot = lista => guardar({ anotaciones: lista });
+  const links = enlaces(c);
+  const sumaPct = links.reduce((a, e) => a + Number(e.pct ?? 0), 0);
+  const guardarLinks = lista => guardar({ criterios: lista });
 
   return (
     <article className={`contenido-card ${abierto ? "abierto" : ""}`}>
       <button type="button" className="contenido-cab" onClick={onAlternar} aria-expanded={abierto}>
         <span className="nombre">{c.nombre}</span>
-        <span className="chip">{c.tipo === "nota" ? "Nota directa" : `Rúbrica · ${c.items.length} ítem${c.items.length === 1 ? "" : "s"}`}</span>
+        <span className="chip">{c.tipo === "nota" ? "Nota directa" : c.tipo === "diario" ? "Diario" : `Rúbrica · ${c.items.length} ítem${c.items.length === 1 ? "" : "s"}`}</span>
         <span className="peso">{fmt(Number(c.peso), 0)}%</span>
         <span className="flecha" aria-hidden="true">{abierto ? "▾" : "▸"}</span>
       </button>
@@ -200,9 +213,23 @@ function EditorContenido({ c, abierto, onAlternar, guardar, setCont, setError, o
               <select className="in" value={c.tipo} onChange={e => guardar({ tipo: e.target.value })}>
                 <option value="rubrica">Rúbrica con ítems</option>
                 <option value="nota">Nota directa (0–10)</option>
+                <option value="diario">Diario (caras 1–5 cada día)</option>
               </select>
             </label>
           </div>
+
+          {c.tipo === "diario" && (
+            <div className="sub">
+              <h4>Diario</h4>
+              <div className="fila">
+                <label className="f en-linea">Asistencia mínima
+                  <span className="pct"><CampoEditable valor={c.min_asistencia ?? 80} inputMode="decimal" style={{ width: 80 }}
+                    onGuardar={v => { const n = numero(v); if (n != null && n >= 0 && n <= 100) guardar({ min_asistencia: n }); }} /></span>
+                </label>
+              </div>
+              <p className="pista" style={{ margin: 0 }}>Cada día se valora con una cara: 😠 1 = 0 · 🙁 2 = 2,5 · 😐 3 = 5 · 🙂 4 = 7,5 · 😄 5 = 10. La nota es la media de los días que vino. Si su asistencia no llega al mínimo, el diario le cuenta 0 y debe hacer un trabajo (salvo excepción).</p>
+            </div>
+          )}
 
           {c.tipo === "rubrica" && (
             <div className="sub">
@@ -227,6 +254,31 @@ function EditorContenido({ c, abierto, onAlternar, guardar, setCont, setError, o
                 <button className="btn sm" onClick={nuevoItem}>+ Ítem</button>
                 {c.items.length > 0 && <span className="pista">Nota = media de los ítems {sumaItems !== c.items.length ? "ponderada por su peso " : ""}÷ {fmt(Number(c.escala_max), 0)} × 10. Con todo a 3 sobre 5 sale un 6.</span>}
               </div>
+            </div>
+          )}
+
+          {criterios.length > 0 && (
+            <div className="sub">
+              <h4>Criterios que evalúa</h4>
+              {links.map((e, i) => (
+                <div className="item-fila crit" key={i}>
+                  <select className="in" value={e.criterio_id} aria-label="Criterio"
+                    onChange={ev => guardarLinks(links.map((x, j) => (j === i ? { ...x, criterio_id: ev.target.value } : x)))}>
+                    {criterios.map(cr => <option key={cr.id} value={cr.id}>{cr.codigo}{cr.descripcion ? " · " + cr.descripcion.slice(0, 60) : ""}</option>)}
+                  </select>
+                  <span className="pct"><CampoEditable valor={e.pct ?? 100} inputMode="decimal" style={{ width: 80 }} aria-label="Porcentaje"
+                    onGuardar={v => guardarLinks(links.map((x, j) => (j === i ? { ...x, pct: Math.max(0, numero(v) ?? 100) } : x)))} /></span>
+                  <BotonBorrar texto="Quitar" onConfirmar={() => guardarLinks(links.filter((_, j) => j !== i))} />
+                </div>
+              ))}
+              <div className="fila">
+                <button className="btn sm" onClick={() => {
+                  const libre = criterios.find(cr => !links.some(e => e.criterio_id === cr.id)) || criterios[0];
+                  guardarLinks([...links, { criterio_id: libre.id, pct: links.length ? Math.max(0, 100 - sumaPct) : 100, peso: null }]);
+                }}>+ Criterio</button>
+                {links.length > 0 && <span className={`small ${sumaPct === 100 ? "ok" : "atencion"}`}>Suma: {fmt(sumaPct, 0)}%{sumaPct !== 100 && " (debería ser 100)"}</span>}
+              </div>
+              <p className="pista" style={{ margin: 0 }}>Cuánto de la nota de esta herramienta va a cada criterio. Su peso dentro del criterio es su carga en la evaluación; se puede cambiar en Criterios y competencias.</p>
             </div>
           )}
 

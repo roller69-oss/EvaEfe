@@ -27,10 +27,33 @@ export function notaContenido(contenido, calif) {
     const n = calif?.compensatorio?.nota;
     return n == null ? { nota: null, cuenta: false, estado } : { nota: Number(n), cuenta: true, estado };
   }
+  if (contenido.tipo === "diario") return { ...notaDiario(contenido, calif), estado };
   const n = contenido.tipo === "nota"
     ? (calif?.nota == null ? null : Number(calif.nota))
     : notaRubrica(contenido.items ?? [], calif?.valores, Number(contenido.escala_max ?? 5));
   return { nota: n, cuenta: n != null, estado };
+}
+
+/** Cara 1–5 a nota sobre 10: 1 = 0 · 2 = 2,5 · 3 = 5 · 4 = 7,5 · 5 = 10 */
+export const caraANota = v => ((Number(v) - 1) / 4) * 10;
+
+/**
+ * Diario: media de los días que vino (las faltas no cuentan en la media).
+ * Si su asistencia no llega al mínimo y no tiene excepción → 0 y debe hacer trabajo.
+ * contenido.sesiones = ids de las sesiones de ESTE grupo.
+ */
+export function notaDiario(contenido, calif) {
+  const ses = contenido.sesiones ?? [];
+  const total = ses.length;
+  const vals = calif?.valores || {};
+  const presentes = ses.filter(s => vals[s] != null && vals[s] !== "");
+  const asistencia = total ? (presentes.length / total) * 100 : null;
+  const media = presentes.length ? presentes.reduce((a, s) => a + caraANota(vals[s]), 0) / presentes.length : null;
+  const excepcion = calif?.extra?.excepcion || null;
+  const base = { presentes: presentes.length, total, asistencia, media, excepcion, debeTrabajo: false };
+  if (!total) return { ...base, nota: null, cuenta: false };
+  if (!excepcion && asistencia + 1e-9 < Number(contenido.min_asistencia ?? 80)) return { ...base, nota: 0, cuenta: true, debeTrabajo: true };
+  return { ...base, nota: media, cuenta: media != null };
 }
 
 /** Nota de una evaluación: contenidos de esa evaluación ponderados por su peso (se reparten los que no cuentan). */

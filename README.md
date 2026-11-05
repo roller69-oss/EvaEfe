@@ -96,4 +96,6 @@ npm run dev              # http://localhost:5173
 - [x] Poner notas desde el móvil (botones 0–5, trabajo compensatorio, exento, NP, datos anotados)
 - [x] Tablas de 1ª, 2ª, 3ª y final con nota real y de boletín, ajustes manuales
 - [x] Exportar a Excel (CSV)
+- [x] Criterios de evaluación y competencias (supabase/02_criterios.sql)
+- [x] Contenido tipo Diario con caras 1–5, asistencia mínima, trabajo y excepciones (supabase/03_diario.sql)
 - [ ] Estadísticas por grupo y curso

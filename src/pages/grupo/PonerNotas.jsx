@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { notaContenido, fmt } from "../../lib/calc.js";
 import { CampoEditable, numero } from "../../components/ui.jsx";
+import Diario from "./Diario.jsx";
 
 const ESTADOS = [["normal", "Normal"], ["compensatorio", "Trabajo"], ["exento", "Exento"], ["np", "NP"]];
 
@@ -40,7 +41,9 @@ export default function PonerNotas({ g }) {
         </select>
       </div>
 
-      {cont && (
+      {cont?.tipo === "diario" && <Diario key={cont.id} g={g} cont={cont} />}
+
+      {cont && cont.tipo !== "diario" && (
         <>
           <div className="fila small">
             <span className="muted">{cont.tipo === "nota" ? "Nota directa de 0 a 10" : `Rúbrica de ${cont.items.length} ítems, de 0 a ${fmt(Number(cont.escala_max), 0)}`}</span>

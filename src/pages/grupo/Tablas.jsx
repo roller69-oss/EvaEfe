@@ -2,6 +2,7 @@ import { useState } from "react";
 import { notaContenido, fmt } from "../../lib/calc.js";
 import { EVALS, notasAlumno, resumen } from "../../lib/notasGrupo.js";
 import { numero } from "../../components/ui.jsx";
+import DiarioSeguimiento from "./DiarioSeguimiento.jsx";
 
 const MARCA = { compensatorio: ["T", "Trabajo compensatorio"], exento: ["E", "Exento"], np: ["NP", "No presentado"] };
 
@@ -30,6 +31,11 @@ export default function Tablas({ g }) {
           if (k?.estado === "compensatorio") sit.push(`${c.nombre}: trabajo compensatorio${k.compensatorio?.motivo ? " (" + k.compensatorio.motivo + ")" : ""}${k.compensatorio?.descripcion ? " - " + k.compensatorio.descripcion : ""}`);
           if (k?.estado === "exento") sit.push(`${c.nombre}: exento`);
           if (k?.estado === "np") sit.push(`${c.nombre}: NP`);
+          if (c.tipo === "diario" && k?.estado !== "compensatorio" && k?.estado !== "exento") {
+            if (r.total) sit.push(`${c.nombre}: asistencia ${r.presentes}/${r.total}`);
+            if (r.debeTrabajo) sit.push(`${c.nombre}: debe hacer trabajo`);
+            if (r.excepcion) sit.push(`${c.nombre}: excepción al mínimo (${r.excepcion})`);
+          }
           return k?.estado === "exento" ? "Exento" : fmt(r.nota);
         });
         const f = n.porEval[vista];
@@ -94,9 +100,12 @@ export default function Tablas({ g }) {
                           const m = MARCA[k?.estado];
                           const tip = k?.estado === "compensatorio" ? [k.compensatorio?.motivo, k.compensatorio?.descripcion].filter(Boolean).join(" · ") : m?.[1];
                           return (
-                            <td key={c.id} className={cls(r.nota)} title={tip}>
+                            <td key={c.id} className={`${cls(r.nota)} ${r.debeTrabajo ? "debe-trabajo" : ""}`} title={tip || (r.debeTrabajo ? "No llega al mínimo de asistencia: debe hacer trabajo" : r.excepcion ? "Excepción: " + r.excepcion : undefined)}>
                               {k?.estado === "exento" ? <span className="muted">—</span> : r.nota == null ? "—" : fmt(r.nota)}
                               {m && <sup className={`marca ${k.estado}`}>{m[0]}</sup>}
+                              {r.debeTrabajo && <sup className="marca np">TR</sup>}
+                              {r.excepcion && k?.estado !== "compensatorio" && <sup className="marca exento">X</sup>}
+                              {c.tipo === "diario" && r.total > 0 && k?.estado !== "compensatorio" && k?.estado !== "exento" && <span className="asist">{r.presentes}/{r.total}</span>}
                             </td>
                           );
                         })}
@@ -109,9 +118,11 @@ export default function Tablas({ g }) {
           </table>
         </div>
       )}
+      {!esFinal && cs.filter(c => c.tipo === "diario").map(c => <DiarioSeguimiento key={c.id} g={g} cont={c} />)}
+
       <p className="pista">
         {esFinal ? "La nota final es la media de las notas reales de las evaluaciones con nota." : "Pasa el dedo o el ratón por una nota marcada para ver el detalle."}
-        {" "}T = trabajo compensatorio · E = exento · NP = no presentado. Pulsa una nota de boletín para cambiarla a mano; déjala vacía para volver a la automática ({curso.etapa === "BACH" ? "desde ,5 sube; desde 9,25 es 10" : "desde ,5 sube"}).
+        {" "}T = trabajo compensatorio · E = exento · NP = no presentado · TR = debe hacer trabajo (no llega a la asistencia mínima) · X = excepción al mínimo. Pulsa una nota de boletín para cambiarla a mano; déjala vacía para volver a la automática ({curso.etapa === "BACH" ? "desde ,5 sube; desde 9,25 es 10" : "desde ,5 sube"}).
       </p>
     </div>
   );
