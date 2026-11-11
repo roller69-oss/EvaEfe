@@ -27,6 +27,7 @@ export async function q(promesa) {
 export function mensajeError(e) {
   if (!e) return "";
   if (e.message?.includes("Failed to fetch")) return "Sin conexión con el servidor. Comprueba los datos móviles o el wifi.";
+  if (/schema cache|does not exist/i.test(e.message || "")) return "Falta ejecutar en Supabase el último archivo SQL de actualización (carpeta supabase).";
   if (e.code === "42501") return "No tienes permiso para esa operación. Vuelve a iniciar sesión.";
   return e.message || String(e);
 }

@@ -4,15 +4,32 @@ const EPS = 1e-9;
 
 /** Nota sobre 10 de una rúbrica: media ponderada de los ítems ÷ escala × 10. Null si no hay ítems puntuados. */
 export function notaRubrica(items, valores, escalaMax = 5) {
-  let s = 0, w = 0;
+  return detalleRubrica(items, valores, escalaMax).nota;
+}
+
+/**
+ * Rúbrica: los ítems "nivel" (0–escala) hacen la media ponderada sobre 10;
+ * los ítems "suma"/"resta" añaden o quitan puntos por cada vez que ocurren.
+ * El tope (0 a 10) se aplica al final: un 11 con 1 punto restado se queda en 10.
+ */
+export function detalleRubrica(items, valores, escalaMax = 5) {
+  let s = 0, w = 0, ajuste = 0;
   for (const it of items) {
     const v = valores?.[it.id];
     if (v == null || v === "") continue;
+    const tipo = it.tipo || "nivel";
+    if (tipo === "suma" || tipo === "resta") {
+      ajuste += (tipo === "suma" ? 1 : -1) * Number(v) * Number(it.puntos ?? 0.5);
+      continue;
+    }
     const p = Number(it.peso ?? 1);
     if (p <= 0) continue;
     s += Number(v) * p; w += p;
   }
-  return w ? (s / w / escalaMax) * 10 : null;
+  if (!w) return { base: null, ajuste, sinTope: null, nota: null };
+  const base = (s / w / escalaMax) * 10;
+  const sinTope = base + ajuste;
+  return { base, ajuste, sinTope, nota: Math.max(0, Math.min(10, sinTope)) };
 }
 
 /**

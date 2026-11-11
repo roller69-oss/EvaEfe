@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { notaContenido, fmt } from "../../lib/calc.js";
-import { CampoEditable, numero } from "../../components/ui.jsx";
+import { notaContenido, detalleRubrica, fmt } from "../../lib/calc.js";
+import { CampoEditable, NombreLista, numero } from "../../components/ui.jsx";
 import Diario from "./Diario.jsx";
 
 const ESTADOS = [["normal", "Normal"], ["compensatorio", "Trabajo"], ["exento", "Exento"], ["np", "NP"]];
@@ -81,7 +81,7 @@ function TarjetaAlumno({ alumno, n, cont, calif, guardar }) {
     <article className={`tarjeta-alumno estado-${estado}`}>
       <header>
         <span className="num">{n}</span>
-        <span className="nombre">{alumno.nombre}</span>
+        <span className="nombre"><NombreLista nombre={alumno.nombre} /></span>
         <span className={`nota-chip ${r.nota != null && r.nota < 5 ? "suspenso" : ""}`}>
           {estado === "exento" ? "Exento" : r.nota == null ? "—" : fmt(r.nota)}
         </span>
@@ -94,7 +94,19 @@ function TarjetaAlumno({ alumno, n, cont, calif, guardar }) {
         ))}
       </div>
 
-      {estado === "normal" && cont.tipo === "rubrica" && cont.items.map(it => (
+      {estado === "normal" && cont.tipo === "rubrica" && cont.items.map(it => (it.tipo === "suma" || it.tipo === "resta") ? (
+        <div className={`item-nota contador ${it.tipo}`} key={it.id}>
+          <span className="item-nombre">{it.nombre} <span className="muted">({it.tipo === "suma" ? "+" : "−"}{fmt(Number(it.puntos ?? 0.5), 2)} por vez)</span></span>
+          <div className="contador-ctrl">
+            <button type="button" aria-label={`Quitar una vez: ${it.nombre}`} disabled={!valores[it.id]}
+              onClick={() => { const nv = { ...valores }; const n = (nv[it.id] || 0) - 1; if (n > 0) nv[it.id] = n; else delete nv[it.id]; guardar({ valores: nv }); }}>−</button>
+            <span className="veces" aria-live="polite">{valores[it.id] || 0}</span>
+            <button type="button" aria-label={`Añadir una vez: ${it.nombre}`}
+              onClick={() => guardar({ valores: { ...valores, [it.id]: (valores[it.id] || 0) + 1 } })}>+</button>
+            {valores[it.id] > 0 && <span className={`efecto ${it.tipo}`}>{it.tipo === "suma" ? "+" : "−"}{fmt(valores[it.id] * Number(it.puntos ?? 0.5), 2)}</span>}
+          </div>
+        </div>
+      ) : (
         <div className="item-nota" key={it.id}>
           <span className="item-nombre">{it.nombre}</span>
           <div className="niveles" role="group" aria-label={it.nombre}>
@@ -109,6 +121,12 @@ function TarjetaAlumno({ alumno, n, cont, calif, guardar }) {
           </div>
         </div>
       ))}
+
+      {estado === "normal" && cont.tipo === "rubrica" && (() => {
+        const dr = detalleRubrica(cont.items, valores, Number(cont.escala_max ?? 5));
+        if (dr.base == null || !dr.ajuste) return null;
+        return <p className="pista" style={{ margin: 0 }}>Rúbrica {fmt(dr.base)} {dr.ajuste > 0 ? "+" : "−"} {fmt(Math.abs(dr.ajuste))} = {fmt(dr.sinTope)}{(dr.sinTope > 10 || dr.sinTope < 0) && ` → se queda en ${fmt(dr.nota)}`}</p>;
+      })()}
 
       {estado === "normal" && cont.tipo === "nota" && (
         <label className="f en-linea nota-directa">Nota

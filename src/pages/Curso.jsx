@@ -165,7 +165,6 @@ export default function Curso() {
 
 function EditorContenido({ c, abierto, onAlternar, guardar, setCont, setError, onBorrar, criterios }) {
   const anot = Array.isArray(c.anotaciones) ? c.anotaciones : [];
-  const sumaItems = c.items.reduce((a, i) => a + Number(i.peso || 0), 0);
 
   async function nuevoItem() {
     try {
@@ -244,15 +243,26 @@ function EditorContenido({ c, abierto, onAlternar, guardar, setCont, setError, o
                 <div className="item-fila" key={it.id}>
                   <span className="num">{i + 1}</span>
                   <CampoEditable valor={it.nombre} aria-label="Nombre del ítem" onGuardar={v => guardarItem(it, { nombre: v.trim() || it.nombre })} />
-                  <label className="f en-linea" title="Peso del ítem dentro de la rúbrica">×
-                    <CampoEditable valor={it.peso} inputMode="decimal" style={{ width: 58 }} aria-label="Peso del ítem" onGuardar={v => guardarItem(it, { peso: Math.max(0, numero(v) ?? 1) })} />
-                  </label>
+                  <select className="in tipo-item" value={it.tipo || "nivel"} aria-label="Tipo de ítem" onChange={e => guardarItem(it, { tipo: e.target.value })}>
+                    <option value="nivel">Nivel 0–{fmt(Number(c.escala_max), 0)}</option>
+                    <option value="suma">Suma puntos</option>
+                    <option value="resta">Resta puntos</option>
+                  </select>
+                  {(it.tipo || "nivel") === "nivel" ? (
+                    <label className="f en-linea" title="Peso del ítem dentro de la rúbrica">×
+                      <CampoEditable valor={it.peso} inputMode="decimal" style={{ width: 58 }} aria-label="Peso del ítem" onGuardar={v => guardarItem(it, { peso: Math.max(0, numero(v) ?? 1) })} />
+                    </label>
+                  ) : (
+                    <label className="f en-linea" title="Puntos de la nota (sobre 10) por cada vez">{it.tipo === "suma" ? "+" : "−"}
+                      <CampoEditable valor={it.puntos ?? 0.5} inputMode="decimal" style={{ width: 58 }} aria-label="Puntos por vez" onGuardar={v => guardarItem(it, { puntos: Math.max(0, numero(v) ?? 0.5) })} />
+                    </label>
+                  )}
                   <BotonBorrar texto="Quitar" onConfirmar={() => borrarItem(it)} />
                 </div>
               ))}
               <div className="fila">
                 <button className="btn sm" onClick={nuevoItem}>+ Ítem</button>
-                {c.items.length > 0 && <span className="pista">Nota = media de los ítems {sumaItems !== c.items.length ? "ponderada por su peso " : ""}÷ {fmt(Number(c.escala_max), 0)} × 10. Con todo a 3 sobre 5 sale un 6.</span>}
+                {c.items.length > 0 && <span className="pista">Nota = media de los ítems de nivel ÷ {fmt(Number(c.escala_max), 0)} × 10 (todo a 3 sobre 5 = 6), más o menos los puntos de los ítems que suman o restan por cada vez. Nunca pasa de 10 ni baja de 0: un 11 con un punto restado se queda en 10.</span>}
               </div>
             </div>
           )}

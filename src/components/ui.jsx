@@ -44,6 +44,13 @@ export function Cargando() {
   return <p className="muted">Cargando…</p>;
 }
 
+/** "Apellido1 Apellido2, Nombre" → Nombre en negrita y después los apellidos, como se pasa lista. */
+export function NombreLista({ nombre }) {
+  const i = nombre.lastIndexOf(",");
+  if (i < 0) return <span className="nombre-lista"><b>{nombre}</b></span>;
+  return <span className="nombre-lista"><b>{nombre.slice(i + 1).trim()}</b> {nombre.slice(0, i).trim()}</span>;
+}
+
 /** Convierte "9,25" o "9.25" en número; devuelve null si está vacío. */
 export function numero(v) {
   if (v === "" || v == null) return null;

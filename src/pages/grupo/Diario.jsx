@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { notaContenido, fmt } from "../../lib/calc.js";
-import { BotonBorrar, CampoEditable } from "../../components/ui.jsx";
+import { BotonBorrar, CampoEditable, NombreLista } from "../../components/ui.jsx";
 
 export const CARAS = [[1, "😠"], [2, "🙁"], [3, "😐"], [4, "🙂"], [5, "😄"]];
 export const cara = v => CARAS.find(c => c[0] === Number(v))?.[1] || "";
@@ -70,7 +70,7 @@ export default function Diario({ g, cont }) {
                 <div className={`fila-diario ${v == null && !exento ? "falta" : ""}`} key={a.id}>
                   <div className="quien">
                     <span className="num">{i + 1}</span>
-                    <span className="nombre">{a.nombre}</span>
+                    <span className="nombre"><NombreLista nombre={a.nombre} /></span>
                     <span className="resumen-diario">
                       {exento ? "Exento" : <>
                         {r.media == null ? "—" : fmt(r.media, 1)} · {r.presentes}/{r.total}

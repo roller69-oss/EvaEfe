@@ -255,3 +255,25 @@ label.btn { cursor: pointer; }
 .seg-fila { padding: 6px 0; border-bottom: 1px solid var(--rejilla); display: flex; flex-direction: column; gap: 6px; }
 .seg-fila.fila { flex-direction: row; }
 .seg-fila .nombre { font-weight: 700; }
+
+/* ---------- Nombres en orden de lista y contadores ---------- */
+.nombre-lista b { font-weight: 800; }
+.tarjeta-alumno .nombre, .fila-diario .nombre { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.25; font-weight: 400; }
+.fila-diario .quien { flex: 1 1 100%; align-items: flex-start; }
+.fila-diario .resumen-diario { padding-top: 2px; }
+@media (min-width: 700px) { .fila-diario .quien { flex: 1 1 260px; } }
+.item-fila { grid-template-columns: 24px minmax(0, 1fr) auto auto auto; }
+.tipo-item { width: auto; min-height: 36px; padding: 4px 8px; font-size: 13px; }
+@media (max-width: 560px) {
+  .item-fila:not(.anot):not(.crit) { grid-template-columns: 24px minmax(0, 1fr) auto; }
+  .item-fila:not(.anot):not(.crit) > :nth-child(2) { grid-column: 2 / -1; }
+}
+.contador-ctrl { display: flex; align-items: center; gap: 8px; }
+.contador-ctrl button { width: 48px; min-height: 44px; border: 1px solid var(--linea); background: var(--superficie); border-radius: 10px; font-family: var(--f-num); font-size: 20px; font-weight: 700; cursor: pointer; color: var(--tinta); touch-action: manipulation; }
+.contador-ctrl button:disabled { opacity: .35; cursor: default; }
+.contador-ctrl .veces { font-family: var(--f-num); font-weight: 700; font-size: 18px; min-width: 28px; text-align: center; }
+.contador-ctrl .efecto { font-family: var(--f-num); font-weight: 700; font-size: 13px; padding: 2px 8px; border-radius: 999px; }
+.efecto.suma { background: var(--verde-suave); color: var(--verde); }
+.efecto.resta { background: var(--rojo-suave); color: var(--rojo); }
+.item-nota.contador.suma .contador-ctrl button:last-of-type { border-color: var(--verde); color: var(--verde); }
+.item-nota.contador.resta .contador-ctrl button:last-of-type { border-color: var(--rojo); color: var(--rojo); }
