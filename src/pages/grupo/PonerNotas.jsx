@@ -41,6 +41,18 @@ export default function PonerNotas({ g }) {
         </select>
       </div>
 
+      {cont && (
+        <div className={`terminar ${cont.terminado ? "hecho" : ""}`}>
+          <span>{cont.terminado
+            ? <><b>Terminado</b> en este grupo: quien no tenga nota cuenta 0.</>
+            : <><b>En curso:</b> quien aún no tiene nota no cuenta en la media.</>}</span>
+          <span className="espacio" />
+          <button type="button" className={`btn sm ${cont.terminado ? "fantasma" : "primario"}`} onClick={() => g.alternarTerminado(cont.id)}>
+            {cont.terminado ? "Reabrir" : "Dar por terminado"}
+          </button>
+        </div>
+      )}
+
       {cont?.tipo === "diario" && <Diario key={cont.id} g={g} cont={cont} />}
 
       {cont && cont.tipo !== "diario" && (

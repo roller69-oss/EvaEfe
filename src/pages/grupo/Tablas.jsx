@@ -31,6 +31,7 @@ export default function Tablas({ g }) {
           if (k?.estado === "compensatorio") sit.push(`${c.nombre}: trabajo compensatorio${k.compensatorio?.motivo ? " (" + k.compensatorio.motivo + ")" : ""}${k.compensatorio?.descripcion ? " - " + k.compensatorio.descripcion : ""}`);
           if (k?.estado === "exento") sit.push(`${c.nombre}: exento`);
           if (k?.estado === "np") sit.push(`${c.nombre}: NP`);
+          if (r.ceroAuto) sit.push(`${c.nombre}: no realizado (0)`);
           if (r.repitio && (k?.estado ?? "normal") === "normal") sit.push(`${c.nombre}: ${textoIntentos(c, r)}`);
           if (c.tipo === "diario" && k?.estado !== "compensatorio" && k?.estado !== "exento") {
             if (r.total) sit.push(`${c.nombre}: asistencia ${r.presentes}/${r.total}`);
@@ -72,6 +73,17 @@ export default function Tablas({ g }) {
         <span className="muted">sobre {st.n} con nota (boletín)</span>
       </div>
 
+      {!esFinal && cs.some(c => !c.terminado) && (
+        <div className="aviso-curso">
+          <span>En curso en la {vista}ª evaluación (los vacíos aún no cuentan):</span>
+          {cs.filter(c => !c.terminado).map(c => (
+            <span key={c.id} className="pendiente-cont">{c.nombre}
+              <button type="button" className="btn sm" onClick={() => g.alternarTerminado(c.id)}>Dar por terminado</button>
+            </span>
+          ))}
+        </div>
+      )}
+
       {!esFinal && !cs.length && <div className="vacio"><p>No hay contenidos en la {vista}ª evaluación.</p></div>}
 
       {(esFinal || cs.length > 0) && (
@@ -82,7 +94,7 @@ export default function Tablas({ g }) {
                 <th className="fija">Alumno</th>
                 {esFinal
                   ? EVALS.map(e => <th key={e}>{e}ª Ev.</th>)
-                  : cs.map(c => <th key={c.id}><span className="cab-cont">{c.nombre}</span><span className="cab-peso">{fmt(Number(c.peso), 0)}%</span></th>)}
+                  : cs.map(c => <th key={c.id} className={c.terminado ? "" : "en-curso"} title={c.terminado ? "Terminado" : "En curso: los vacíos aún no cuentan"}><span className="cab-cont">{c.nombre}</span><span className="cab-peso">{fmt(Number(c.peso), 0)}%{c.terminado ? " ✓" : " · en curso"}</span></th>)}
                 <th className="calc">Real</th>
                 <th className="calc">Boletín</th>
               </tr>
@@ -101,8 +113,8 @@ export default function Tablas({ g }) {
                           const m = MARCA[k?.estado];
                           const tip = k?.estado === "compensatorio" ? [k.compensatorio?.motivo, k.compensatorio?.descripcion].filter(Boolean).join(" · ") : m?.[1];
                           return (
-                            <td key={c.id} className={`${cls(r.nota)} ${r.debeTrabajo ? "debe-trabajo" : ""}`} title={tip || (r.debeTrabajo ? "No llega al mínimo de asistencia: debe hacer trabajo" : r.excepcion ? "Excepción: " + r.excepcion : undefined)}>
-                              {k?.estado === "exento" ? <span className="muted">—</span> : r.nota == null ? "—" : fmt(r.nota)}
+                            <td key={c.id} className={`${cls(r.nota)} ${r.debeTrabajo ? "debe-trabajo" : ""} ${!c.terminado && r.nota == null && k?.estado !== "exento" ? "pendiente" : ""}`} title={tip || (r.debeTrabajo ? "No llega al mínimo de asistencia: debe hacer trabajo" : r.excepcion ? "Excepción: " + r.excepcion : undefined)}>
+                              {k?.estado === "exento" ? <span className="muted">—</span> : r.nota == null ? "—" : r.ceroAuto ? <span title="No realizado: contenido terminado">0*</span> : fmt(r.nota)}
                               {m && <sup className={`marca ${k.estado}`}>{m[0]}</sup>}
                               {r.debeTrabajo && <sup className="marca np">TR</sup>}
                               {r.repitio && (k?.estado ?? "normal") === "normal" && <sup className="marca rep" title={textoIntentos(c, r)}>R{r.manual ? "✎" : ""}</sup>}
@@ -124,7 +136,7 @@ export default function Tablas({ g }) {
 
       <p className="pista">
         {esFinal ? "La nota final es la media de las notas reales de las evaluaciones con nota." : "Pasa el dedo o el ratón por una nota marcada para ver el detalle."}
-        {" "}T = trabajo compensatorio · E = exento · NP = no presentado · R = ha repetido (pasa el dedo para ver los intentos) · TR = debe hacer trabajo (no llega a la asistencia mínima) · X = excepción al mínimo. Pulsa una nota de boletín para cambiarla a mano; déjala vacía para volver a la automática ({curso.etapa === "BACH" ? "desde ,5 sube; desde 9,25 es 10" : "desde ,5 sube"}).
+        {" "}T = trabajo compensatorio · E = exento · NP = no presentado · 0* = no realizado (contenido terminado) · celda resaltada = sin nota en un contenido en curso · R = ha repetido (pasa el dedo para ver los intentos) · TR = debe hacer trabajo (no llega a la asistencia mínima) · X = excepción al mínimo. Pulsa una nota de boletín para cambiarla a mano; déjala vacía para volver a la automática ({curso.etapa === "BACH" ? "desde ,5 sube; desde 9,25 es 10" : "desde ,5 sube"}).
       </p>
     </div>
   );

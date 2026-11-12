@@ -37,6 +37,13 @@ export function detalleRubrica(items, valores, escalaMax = 5) {
  * Devuelve { nota, cuenta, estado }: cuenta=false si el alumno está exento o aún no tiene nota.
  */
 export function notaContenido(contenido, calif) {
+  const r = notaContenidoBase(contenido, calif);
+  // Contenido dado por terminado en el grupo: quien no tenga nota cuenta 0 (salvo exentos)
+  if (contenido.terminado && !r.cuenta && r.estado !== "exento") return { ...r, nota: 0, cuenta: true, ceroAuto: true };
+  return r;
+}
+
+function notaContenidoBase(contenido, calif) {
   const estado = calif?.estado ?? "normal";
   if (estado === "exento") return { nota: null, cuenta: false, estado };
   if (estado === "np") return { nota: 0, cuenta: true, estado };

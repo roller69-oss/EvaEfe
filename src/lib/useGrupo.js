@@ -34,7 +34,7 @@ export function useGrupo(id) {
       ]);
       // Días del diario de este grupo (vacío si aún no se ejecutó 03_diario.sql)
       const { data: sesiones } = await supabase.from("sesiones_diario").select("id, contenido_id, fecha").eq("grupo_id", id).order("fecha");
-      setD({ grupo, curso: grupo.cursos, alumnos, contenidos: conSesiones(contenidos, sesiones || []), sesiones: sesiones || [], cal, aj, competencias: competencias || [], criterios: criterios || [] });
+      setD({ grupo, curso: grupo.cursos, alumnos, contenidos: conTerminados(conSesiones(contenidos, sesiones || []), grupo.terminados), sesiones: sesiones || [], cal, aj, competencias: competencias || [], criterios: criterios || [] });
     } catch (e) { setError(mensajeError(e)); }
   }, [id]);
 
@@ -83,6 +83,19 @@ export function useGrupo(id) {
     } catch (e) { setError(mensajeError(e)); }
   }, []);
 
+  /** Da por terminado (o reabre) un contenido en este grupo. */
+  const alternarTerminado = useCallback(async contenidoId => {
+    let nuevos;
+    setD(x => {
+      nuevos = { ...(x.grupo.terminados || {}) };
+      if (nuevos[contenidoId]) delete nuevos[contenidoId]; else nuevos[contenidoId] = new Date().toISOString().slice(0, 10);
+      return { ...x, grupo: { ...x.grupo, terminados: nuevos }, contenidos: conTerminados(x.contenidos, nuevos) };
+    });
+    await new Promise(r => setTimeout(r, 0));
+    try { await q(supabase.from("grupos").update({ terminados: nuevos }).eq("id", id)); }
+    catch (e) { setError(mensajeError(e)); cargar(); }
+  }, [id, cargar]);
+
   /** Crea (o recupera) el día de diario de una fecha. Devuelve su id. */
   const crearSesion = useCallback(async (contenidoId, fecha) => {
     try {
@@ -115,7 +128,13 @@ export function useGrupo(id) {
     return () => window.removeEventListener("beforeunload", h);
   }, []);
 
-  return { d, error, setError, cargar, setAlumnos, guardarCalif, guardarAjuste, guardando, crearSesion, borrarSesion };
+  return { d, error, setError, cargar, setAlumnos, guardarCalif, guardarAjuste, guardando, crearSesion, borrarSesion, alternarTerminado };
+}
+
+/** Marca en cada contenido si está dado por terminado en este grupo. */
+function conTerminados(contenidos, terminados) {
+  const t = terminados || {};
+  return contenidos.map(c => ({ ...c, terminado: Boolean(t[c.id]) }));
 }
 
 /** Añade a cada contenido diario la lista ordenada de ids de sus días en este grupo. */
