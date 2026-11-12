@@ -297,3 +297,19 @@ label.btn { cursor: pointer; }
 .pendiente-cont { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 10px; border-radius: 999px; background: var(--superficie); color: var(--tinta); font-weight: 700; }
 .hoja th.en-curso .cab-peso { color: var(--ambar); }
 .hoja td.pendiente { background: var(--ambar-suave); }
+
+/* ---------- Pasar lista del examen ---------- */
+.pasar-lista { display: flex; flex-direction: column; gap: 8px; }
+.lista-examen { display: flex; flex-direction: column; gap: 4px; background: var(--superficie); border: 1px solid var(--linea); border-radius: 12px; padding: 10px 12px; }
+.fila-lista { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 0; border-bottom: 1px solid var(--rejilla); }
+.fila-lista:last-of-type { border-bottom: 0; }
+.fila-lista .nombre { flex: 1 1 180px; min-width: 0; }
+.vino-falta { display: inline-flex; gap: 4px; }
+.vino-falta button { border: 1px solid var(--linea); background: var(--papel); border-radius: 8px; padding: 6px 14px; font-weight: 700; font-size: 13.5px; cursor: pointer; min-height: 40px; color: var(--muted); touch-action: manipulation; }
+.vino-falta button.vino[aria-pressed="true"] { background: var(--verde-suave); border-color: var(--verde); color: var(--verde); }
+.vino-falta button.falta[aria-pressed="true"] { background: var(--rojo-suave); border-color: var(--rojo); color: var(--rojo); }
+.chip.asis { align-self: flex-start; }
+.chip.asis.pendiente { background: var(--ambar-suave); color: var(--ambar); }
+.chip.asis.falta { background: var(--rojo-suave); color: var(--rojo); }
+.marca.pend { background: var(--ambar-suave); color: var(--ambar); }
+b.ambar { color: var(--ambar); }

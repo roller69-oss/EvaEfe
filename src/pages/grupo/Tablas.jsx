@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { notaContenido, textoIntentos, fmt } from "../../lib/calc.js";
+import { notaContenido, textoIntentos, asistenciaExamen, fmt } from "../../lib/calc.js";
 import { EVALS, notasAlumno, resumen } from "../../lib/notasGrupo.js";
 import { numero } from "../../components/ui.jsx";
 import DiarioSeguimiento from "./DiarioSeguimiento.jsx";
@@ -32,6 +32,9 @@ export default function Tablas({ g }) {
           if (k?.estado === "exento") sit.push(`${c.nombre}: exento`);
           if (k?.estado === "np") sit.push(`${c.nombre}: NP`);
           if (r.ceroAuto) sit.push(`${c.nombre}: no realizado (0)`);
+          const ae = asistenciaExamen(c, k), fa = k?.extra?.asistencia?.fecha ? ` (${k.extra.asistencia.fecha.split("-").reverse().slice(0, 2).join("/")})` : "";
+          if (ae === "falta") sit.push(`${c.nombre}: faltó al examen${fa}`);
+          if (ae === "pendiente") sit.push(`${c.nombre}: vino, pendiente de evaluar${fa}`);
           if (r.repitio && (k?.estado ?? "normal") === "normal") sit.push(`${c.nombre}: ${textoIntentos(c, r)}`);
           if (c.tipo === "diario" && k?.estado !== "compensatorio" && k?.estado !== "exento") {
             if (r.total) sit.push(`${c.nombre}: asistencia ${r.presentes}/${r.total}`);
@@ -117,6 +120,8 @@ export default function Tablas({ g }) {
                               {k?.estado === "exento" ? <span className="muted">—</span> : r.nota == null ? "—" : r.ceroAuto ? <span title="No realizado: contenido terminado">0*</span> : fmt(r.nota)}
                               {m && <sup className={`marca ${k.estado}`}>{m[0]}</sup>}
                               {r.debeTrabajo && <sup className="marca np">TR</sup>}
+                              {asistenciaExamen(c, k) === "pendiente" && <sup className="marca pend" title="Vino al examen; pendiente de evaluar">P</sup>}
+                              {asistenciaExamen(c, k) === "falta" && <sup className="marca np" title="Faltó al examen">F</sup>}
                               {r.repitio && (k?.estado ?? "normal") === "normal" && <sup className="marca rep" title={textoIntentos(c, r)}>R{r.manual ? "✎" : ""}</sup>}
                               {r.excepcion && k?.estado !== "compensatorio" && <sup className="marca exento">X</sup>}
                               {c.tipo === "diario" && r.total > 0 && k?.estado !== "compensatorio" && k?.estado !== "exento" && <span className="asist">{r.presentes}/{r.total}</span>}
@@ -136,7 +141,7 @@ export default function Tablas({ g }) {
 
       <p className="pista">
         {esFinal ? "La nota final es la media de las notas reales de las evaluaciones con nota." : "Pasa el dedo o el ratón por una nota marcada para ver el detalle."}
-        {" "}T = trabajo compensatorio · E = exento · NP = no presentado · 0* = no realizado (contenido terminado) · celda resaltada = sin nota en un contenido en curso · R = ha repetido (pasa el dedo para ver los intentos) · TR = debe hacer trabajo (no llega a la asistencia mínima) · X = excepción al mínimo. Pulsa una nota de boletín para cambiarla a mano; déjala vacía para volver a la automática ({curso.etapa === "BACH" ? "desde ,5 sube; desde 9,25 es 10" : "desde ,5 sube"}).
+        {" "}T = trabajo compensatorio · E = exento · NP = no presentado · 0* = no realizado (contenido terminado) · celda resaltada = sin nota en un contenido en curso · P = vino, pendiente de evaluar · F = faltó al examen · R = ha repetido (pasa el dedo para ver los intentos) · TR = debe hacer trabajo (no llega a la asistencia mínima) · X = excepción al mínimo. Pulsa una nota de boletín para cambiarla a mano; déjala vacía para volver a la automática ({curso.etapa === "BACH" ? "desde ,5 sube; desde 9,25 es 10" : "desde ,5 sube"}).
       </p>
     </div>
   );

@@ -94,10 +94,21 @@ export function derechoRepetir(contenido, calif) {
   const { modo } = repeticion(contenido);
   if (modo === "todos") return { derecho: true, manual: false };
   if (modo === "presentados") {
-    const presentado = (calif?.estado ?? "normal") === "normal" && notaIntento(contenido, calif) != null;
+    const presentado = (calif?.estado ?? "normal") === "normal" && (notaIntento(contenido, calif) != null || calif?.extra?.asistencia?.valor === "vino");
     return { derecho: presentado, manual: false };
   }
   return { derecho: false, manual: false };
+}
+
+/**
+ * Asistencia al examen (1.er intento): "evaluado" si ya tiene nota, "pendiente" si vino y falta evaluarlo,
+ * "falta" si no vino, null si no se pasó lista.
+ */
+export function asistenciaExamen(contenido, calif) {
+  if (contenido.tipo === "diario" || (calif?.estado ?? "normal") !== "normal") return null;
+  if (notaIntento(contenido, calif) != null) return "evaluado";
+  const a = calif?.extra?.asistencia?.valor;
+  return a === "vino" ? "pendiente" : a === "falta" ? "falta" : null;
 }
 
 /** Texto para el Excel: "Repitió: 1.º 5,5 / 2.º 7 → cuenta 7 (mejor)". */

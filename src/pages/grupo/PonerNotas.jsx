@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { notaContenido, detalleRubrica, derechoRepetir, repeticion, fmt } from "../../lib/calc.js";
+import { notaContenido, detalleRubrica, derechoRepetir, repeticion, asistenciaExamen, fmt } from "../../lib/calc.js";
 import { BotonBorrar, CampoEditable, NombreLista, numero } from "../../components/ui.jsx";
 import Diario from "./Diario.jsx";
 
@@ -53,6 +53,8 @@ export default function PonerNotas({ g }) {
         </div>
       )}
 
+      {cont && cont.tipo !== "diario" && <PasarLista key={"pl" + cont.id} g={g} cont={cont} />}
+
       {cont?.tipo === "diario" && <Diario key={cont.id} g={g} cont={cont} />}
 
       {cont && cont.tipo !== "diario" && (
@@ -96,7 +98,9 @@ function TarjetaAlumno({ alumno, n, cont, calif, guardar }) {
     : guardar({ intentos: extraIntentos.map((x, j) => (j === i - 1 ? { ...x, ...cambios } : x)) }));
   const rep = repeticion(cont);
   const der = derechoRepetir(cont, calif);
-  const puedeOtro = der.derecho && extraIntentos.length < rep.intentos;
+  // Repetir solo cuando ya hizo el 1.er intento (o se le dio derecho a mano, p. ej. faltó con justificante)
+  const hizoPrimero = r.intentos?.[0] != null;
+  const puedeOtro = der.derecho && (hizoPrimero || der.manual) && extraIntentos.length < rep.intentos;
   const [editDerecho, setEditDerecho] = useState(false);
   const anotV = calif?.anotaciones || {};
   const comp = calif?.compensatorio || {};
@@ -112,6 +116,14 @@ function TarjetaAlumno({ alumno, n, cont, calif, guardar }) {
         </span>
       </header>
       {alumno.observaciones && <p className="obs-alumno">{alumno.observaciones}</p>}
+      {(() => {
+        const ae = asistenciaExamen(cont, calif);
+        const f = calif?.extra?.asistencia?.fecha;
+        const fc = f ? ` (${f.split("-").reverse().slice(0, 2).join("/")})` : "";
+        if (ae === "pendiente") return <span className="chip asis pendiente">Vino{fc} · pendiente de evaluar</span>;
+        if (ae === "falta") return <span className="chip asis falta">Faltó al examen{fc}</span>;
+        return null;
+      })()}
 
       <div className="estados" role="group" aria-label="Situación">
         {ESTADOS.map(([k, l]) => (
@@ -250,5 +262,58 @@ function TarjetaAlumno({ alumno, n, cont, calif, guardar }) {
         </div>
       )}
     </article>
+  );
+}
+
+const hoyISO = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+
+/** Lista del día del examen: quién vino (aunque no dé tiempo a evaluarlo) y quién faltó. */
+function PasarLista({ g, cont }) {
+  const { alumnos, cal } = g.d;
+  const [abierta, setAbierta] = useState(false);
+  const [fecha, setFecha] = useState(hoyISO());
+  const marca = a => cal[a.id]?.[cont.id]?.extra?.asistencia;
+  const poner = (a, valor) => {
+    const c = cal[a.id]?.[cont.id];
+    const extra = { ...(c?.extra || {}) };
+    if (extra.asistencia?.valor === valor) extra.asistencia = null; else extra.asistencia = { valor, fecha };
+    g.guardarCalif(a.id, cont.id, { extra });
+  };
+  const n = { vino: 0, falta: 0, pendiente: 0 };
+  for (const a of alumnos) {
+    const v = marca(a)?.valor; if (v) n[v]++;
+    if (asistenciaExamen(cont, cal[a.id]?.[cont.id]) === "pendiente") n.pendiente++;
+  }
+  const sinMarca = alumnos.filter(a => !marca(a) && cal[a.id]?.[cont.id]?.estado !== "exento" && asistenciaExamen(cont, cal[a.id]?.[cont.id]) !== "evaluado");
+
+  return (
+    <div className="pasar-lista">
+      <div className="fila">
+        <button type="button" className="btn sm" aria-expanded={abierta} onClick={() => setAbierta(!abierta)}>{abierta ? "Cerrar lista" : "Pasar lista del examen"}</button>
+        <span className="small muted">{n.vino} vinieron · {n.falta} faltaron{n.pendiente ? <> · <b className="ambar">{n.pendiente} pendientes de evaluar</b></> : ""}</span>
+      </div>
+      {abierta && (
+        <div className="lista-examen">
+          <div className="fila">
+            <label className="f en-linea">Día<input type="date" className="in" style={{ width: "auto" }} value={fecha} onChange={e => setFecha(e.target.value || hoyISO())} /></label>
+            <span className="espacio" />
+            {sinMarca.length > 0 && <button type="button" className="btn sm primario" onClick={() => sinMarca.forEach(a => poner(a, "vino"))}>Todos vinieron ({sinMarca.length})</button>}
+          </div>
+          {alumnos.map(a => {
+            const m = marca(a)?.valor;
+            return (
+              <div className="fila-lista" key={a.id}>
+                <span className="nombre"><NombreLista nombre={a.nombre} /></span>
+                <div className="vino-falta" role="group" aria-label={a.nombre}>
+                  <button type="button" aria-pressed={m === "vino"} className="vino" onClick={() => poner(a, "vino")}>Vino</button>
+                  <button type="button" aria-pressed={m === "falta"} className="falta" onClick={() => poner(a, "falta")}>No vino</button>
+                </div>
+              </div>
+            );
+          })}
+          <p className="pista" style={{ margin: 0 }}>Quien vino y aún no tiene nota queda como pendiente de evaluar y conserva su derecho a repetir. Quien no vino no tiene derecho (salvo que se lo des a mano) y cuenta 0 al dar el contenido por terminado.</p>
+        </div>
+      )}
+    </div>
   );
 }
