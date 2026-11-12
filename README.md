@@ -99,4 +99,5 @@ npm run dev              # http://localhost:5173
 - [x] Criterios de evaluación y competencias (supabase/02_criterios.sql)
 - [x] Contenido tipo Diario con caras 1–5, asistencia mínima, trabajo y excepciones (supabase/03_diario.sql)
 - [x] Ítems de rúbrica que suman o restan puntos por vez, con tope de 10 (supabase/04_items_puntos.sql)
+- [x] Repetir pruebas: derecho por regla o a mano, varios intentos, cuenta la mejor/última/media (supabase/05_repeticion.sql)
 - [ ] Estadísticas por grupo y curso

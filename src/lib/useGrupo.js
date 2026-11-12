@@ -59,6 +59,7 @@ export function useGrupo(id) {
         const { alumno_id, contenido_id, nota, valores, estado, compensatorio, anotaciones, extra } = fila;
         const datos = { alumno_id, contenido_id, nota, valores, estado, compensatorio, anotaciones };
         if (extra && Object.keys(extra).length) datos.extra = extra; // columna de 03_diario.sql
+        if ("intentos" in fila) datos.intentos = fila.intentos || []; // columna de 05_repeticion.sql
         await q(supabase.from("calificaciones").upsert(datos, { onConflict: "alumno_id,contenido_id" }));
       } catch (e) { setError("No se ha guardado una nota: " + mensajeError(e)); }
       finally { setGuardando(n => n - 1); }

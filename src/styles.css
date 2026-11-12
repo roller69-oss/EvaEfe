@@ -277,3 +277,15 @@ label.btn { cursor: pointer; }
 .efecto.resta { background: var(--rojo-suave); color: var(--rojo); }
 .item-nota.contador.suma .contador-ctrl button:last-of-type { border-color: var(--verde); color: var(--verde); }
 .item-nota.contador.resta .contador-ctrl button:last-of-type { border-color: var(--rojo); color: var(--rojo); }
+
+/* ---------- Repetición ---------- */
+.intentos { display: flex; flex-direction: column; gap: 6px; padding: 8px; border: 1px dashed var(--linea); border-radius: 10px; }
+.intentos-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.intentos-tabs button { border: 1px solid var(--linea); background: var(--papel); border-radius: 8px; padding: 5px 10px; font-size: 13px; cursor: pointer; min-height: 36px; color: var(--muted); }
+.intentos-tabs button b { font-family: var(--f-num); color: var(--tinta); }
+.intentos-tabs button[aria-pressed="true"] { background: var(--azul-suave); border-color: var(--azul); color: var(--azul); }
+.intentos-tabs .cuenta { color: var(--verde); font-weight: 700; }
+.chip.sin-derecho { background: var(--rojo-suave); color: var(--rojo); }
+.marca.rep { background: var(--verde-suave); color: var(--verde); }
+.nota-chip { display: inline-flex; align-items: center; gap: 4px; }
+.nota-chip .marca { margin-left: 0; }

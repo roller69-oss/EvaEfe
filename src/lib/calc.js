@@ -45,10 +45,60 @@ export function notaContenido(contenido, calif) {
     return n == null ? { nota: null, cuenta: false, estado } : { nota: Number(n), cuenta: true, estado };
   }
   if (contenido.tipo === "diario") return { ...notaDiario(contenido, calif), estado };
-  const n = contenido.tipo === "nota"
-    ? (calif?.nota == null ? null : Number(calif.nota))
-    : notaRubrica(contenido.items ?? [], calif?.valores, Number(contenido.escala_max ?? 5));
-  return { nota: n, cuenta: n != null, estado };
+  const notas = notasIntentos(contenido, calif);
+  const { nota, elegido, manual } = notaQueCuenta(contenido, calif, notas);
+  return { nota, cuenta: nota != null, estado, intentos: notas, elegido, manual, repitio: notas.length > 1 && notas.slice(1).some(x => x != null) };
+}
+
+/* ---------- Repetición de pruebas ---------- */
+
+export const REPETICION_DEFECTO = { modo: "no", intentos: 1, cuenta: "mejor" };
+export const repeticion = c => ({ ...REPETICION_DEFECTO, ...(c?.repeticion || {}) });
+
+/** Nota de un intento: 0 = el primero (campos de siempre), 1… = calif.intentos[i-1]. */
+export function notaIntento(contenido, intento) {
+  if (contenido.tipo === "nota") return intento?.nota == null ? null : Number(intento.nota);
+  return notaRubrica(contenido.items ?? [], intento?.valores, Number(contenido.escala_max ?? 5));
+}
+
+/** Notas de todos los intentos: [primero, segundo, …] (null si ese intento no tiene nota). */
+export function notasIntentos(contenido, calif) {
+  const extra = Array.isArray(calif?.intentos) ? calif.intentos : [];
+  return [notaIntento(contenido, calif), ...extra.map(i => notaIntento(contenido, i))];
+}
+
+/** Qué nota cuenta: el intento elegido a mano o la regla del contenido (mejor, último o media). */
+export function notaQueCuenta(contenido, calif, notas) {
+  const validas = notas.map((n, i) => [n, i]).filter(([n]) => n != null);
+  if (!validas.length) return { nota: null, elegido: null, manual: false };
+  const man = calif?.extra?.intento_elegido;
+  if (man != null && notas[man] != null) return { nota: notas[man], elegido: man, manual: true };
+  const regla = repeticion(contenido).cuenta;
+  if (regla === "ultima") { const [n, i] = validas[validas.length - 1]; return { nota: n, elegido: i, manual: false }; }
+  if (regla === "media") return { nota: validas.reduce((a, [n]) => a + n, 0) / validas.length, elegido: null, manual: false };
+  const [n, i] = validas.reduce((m, x) => (x[0] > m[0] ? x : m));
+  return { nota: n, elegido: i, manual: false };
+}
+
+/** ¿Tiene derecho a repetir? El cambio a mano manda sobre la regla del contenido. */
+export function derechoRepetir(contenido, calif) {
+  const man = calif?.extra?.derecho_repetir;
+  if (man && typeof man.valor === "boolean") return { derecho: man.valor, manual: true, motivo: man.motivo || "" };
+  const { modo } = repeticion(contenido);
+  if (modo === "todos") return { derecho: true, manual: false };
+  if (modo === "presentados") {
+    const presentado = (calif?.estado ?? "normal") === "normal" && notaIntento(contenido, calif) != null;
+    return { derecho: presentado, manual: false };
+  }
+  return { derecho: false, manual: false };
+}
+
+/** Texto para el Excel: "Repitió: 1.º 5,5 / 2.º 7 → cuenta 7 (mejor)". */
+export function textoIntentos(contenido, r) {
+  if (!r?.repitio) return "";
+  const regla = { mejor: "mejor", ultima: "último", media: "media" }[repeticion(contenido).cuenta];
+  const lista = r.intentos.map((n, i) => `${i + 1}.º ${n == null ? "—" : fmt(n)}`).join(" / ");
+  return `Repitió: ${lista} → cuenta ${fmt(r.nota)} (${r.manual ? "elegido a mano" : regla})`;
 }
 
 /** Cara 1–5 a nota sobre 10: 1 = 0 · 2 = 2,5 · 3 = 5 · 4 = 7,5 · 5 = 10 */

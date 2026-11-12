@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { notaContenido, detalleRubrica, fmt } from "../../lib/calc.js";
-import { CampoEditable, NombreLista, numero } from "../../components/ui.jsx";
+import { notaContenido, detalleRubrica, derechoRepetir, repeticion, fmt } from "../../lib/calc.js";
+import { BotonBorrar, CampoEditable, NombreLista, numero } from "../../components/ui.jsx";
 import Diario from "./Diario.jsx";
 
 const ESTADOS = [["normal", "Normal"], ["compensatorio", "Trabajo"], ["exento", "Exento"], ["np", "NP"]];
@@ -73,7 +73,19 @@ function TarjetaAlumno({ alumno, n, cont, calif, guardar }) {
   const max = Math.floor(Number(cont.escala_max) || 5);
   const niveles = Array.from({ length: max + 1 }, (_, i) => i);
   const anot = Array.isArray(cont.anotaciones) ? cont.anotaciones : [];
-  const valores = calif?.valores || {};
+  const extraIntentos = Array.isArray(calif?.intentos) ? calif.intentos : [];
+  const [idx, setIdx] = useState(extraIntentos.length);
+  const i = Math.min(idx, extraIntentos.length);
+  const intento = i === 0 ? calif : extraIntentos[i - 1];
+  const valores = intento?.valores || {};
+  const notaActual = intento?.nota ?? null;
+  const guardarIntento = cambios => (i === 0
+    ? guardar(cambios)
+    : guardar({ intentos: extraIntentos.map((x, j) => (j === i - 1 ? { ...x, ...cambios } : x)) }));
+  const rep = repeticion(cont);
+  const der = derechoRepetir(cont, calif);
+  const puedeOtro = der.derecho && extraIntentos.length < rep.intentos;
+  const [editDerecho, setEditDerecho] = useState(false);
   const anotV = calif?.anotaciones || {};
   const comp = calif?.compensatorio || {};
 
@@ -84,6 +96,7 @@ function TarjetaAlumno({ alumno, n, cont, calif, guardar }) {
         <span className="nombre"><NombreLista nombre={alumno.nombre} /></span>
         <span className={`nota-chip ${r.nota != null && r.nota < 5 ? "suspenso" : ""}`}>
           {estado === "exento" ? "Exento" : r.nota == null ? "—" : fmt(r.nota)}
+          {r.repitio && <sup className="marca rep" title="Ha repetido">R</sup>}
         </span>
       </header>
       {alumno.observaciones && <p className="obs-alumno">{alumno.observaciones}</p>}
@@ -94,15 +107,62 @@ function TarjetaAlumno({ alumno, n, cont, calif, guardar }) {
         ))}
       </div>
 
+      {estado === "normal" && (rep.modo !== "no" || extraIntentos.length > 0) && (
+        <div className="intentos">
+          {extraIntentos.length > 0 && (
+            <div className="intentos-tabs" role="group" aria-label="Intento">
+              {[calif, ...extraIntentos].map((_, j) => (
+                <button key={j} type="button" aria-pressed={i === j} onClick={() => setIdx(j)}>
+                  {j + 1}.º <b>{r.intentos?.[j] == null ? "—" : fmt(r.intentos[j])}</b>{r.elegido === j && <span className="cuenta"> ✓</span>}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="fila small">
+            {puedeOtro && <button type="button" className="btn sm" onClick={() => { const hoy = new Date().toISOString().slice(0, 10); guardar({ intentos: [...extraIntentos, { valores: {}, nota: null, fecha: hoy }] }); setIdx(extraIntentos.length + 1); }}>Repetir ({extraIntentos.length + 2}.º intento)</button>}
+            {!der.derecho && rep.modo !== "no" && <span className="chip sin-derecho">Sin derecho a repetir</span>}
+            {der.manual && <span className="muted" title={der.motivo}>{der.derecho ? "Derecho dado a mano" : "Derecho quitado a mano"}{der.motivo ? `: ${der.motivo}` : ""}</span>}
+            <span className="espacio" />
+            <button type="button" className="btn sm fantasma" onClick={() => setEditDerecho(!editDerecho)}>{der.derecho ? "Quitar derecho" : "Dar derecho"}</button>
+          </div>
+          {editDerecho && (
+            <div className="fila">
+              <CampoEditable valor={der.motivo || ""} placeholder="Motivo (p. ej. justificante médico)" autoFocus style={{ flex: "1 1 200px" }}
+                onGuardar={m => { guardar({ extra: { ...(calif?.extra || {}), derecho_repetir: { valor: !der.derecho, motivo: m.trim() } } }); setEditDerecho(false); }} />
+              {der.manual && <button type="button" className="btn sm fantasma" onClick={() => { guardar({ extra: { ...(calif?.extra || {}), derecho_repetir: null } }); setEditDerecho(false); }}>Volver a la regla</button>}
+            </div>
+          )}
+          {extraIntentos.length > 0 && (
+            <div className="fila small">
+              <label className="f en-linea">Cuenta
+                <select className="in" style={{ width: "auto", minHeight: 34 }} value={calif?.extra?.intento_elegido ?? ""}
+                  onChange={e => guardar({ extra: { ...(calif?.extra || {}), intento_elegido: e.target.value === "" ? null : Number(e.target.value) } })}>
+                  <option value="">{{ mejor: "La mejor", ultima: "El último", media: "La media" }[rep.cuenta]} (regla)</option>
+                  {[calif, ...extraIntentos].map((_, j) => <option key={j} value={j}>{j + 1}.º intento</option>)}
+                </select>
+              </label>
+              <span className="espacio" />
+              {i > 0 && <BotonBorrar texto={`Borrar ${i + 1}.º intento`} confirmar="¿Borrar este intento?" onConfirmar={() => {
+                const resto = extraIntentos.filter((_, j) => j !== i - 1);
+                const ex = { ...(calif?.extra || {}) };
+                if (ex.intento_elegido != null && ex.intento_elegido >= i) ex.intento_elegido = null;
+                guardar({ intentos: resto, extra: ex }); setIdx(Math.max(0, i - 1));
+              }} />}
+            </div>
+          )}
+          {extraIntentos[i - 1]?.fecha && <p className="pista" style={{ margin: 0 }}>{i + 1}.º intento · {extraIntentos[i - 1].fecha.split("-").reverse().join("/")}</p>}
+        </div>
+      )}
+
       {estado === "normal" && cont.tipo === "rubrica" && cont.items.map(it => (it.tipo === "suma" || it.tipo === "resta") ? (
         <div className={`item-nota contador ${it.tipo}`} key={it.id}>
           <span className="item-nombre">{it.nombre} <span className="muted">({it.tipo === "suma" ? "+" : "−"}{fmt(Number(it.puntos ?? 0.5), 2)} por vez)</span></span>
           <div className="contador-ctrl">
             <button type="button" aria-label={`Quitar una vez: ${it.nombre}`} disabled={!valores[it.id]}
-              onClick={() => { const nv = { ...valores }; const n = (nv[it.id] || 0) - 1; if (n > 0) nv[it.id] = n; else delete nv[it.id]; guardar({ valores: nv }); }}>−</button>
+              onClick={() => { const nv = { ...valores }; const n = (nv[it.id] || 0) - 1; if (n > 0) nv[it.id] = n; else delete nv[it.id]; guardarIntento({ valores: nv }); }}>−</button>
             <span className="veces" aria-live="polite">{valores[it.id] || 0}</span>
             <button type="button" aria-label={`Añadir una vez: ${it.nombre}`}
-              onClick={() => guardar({ valores: { ...valores, [it.id]: (valores[it.id] || 0) + 1 } })}>+</button>
+              onClick={() => guardarIntento({ valores: { ...valores, [it.id]: (valores[it.id] || 0) + 1 } })}>+</button>
             {valores[it.id] > 0 && <span className={`efecto ${it.tipo}`}>{it.tipo === "suma" ? "+" : "−"}{fmt(valores[it.id] * Number(it.puntos ?? 0.5), 2)}</span>}
           </div>
         </div>
@@ -115,7 +175,7 @@ function TarjetaAlumno({ alumno, n, cont, calif, guardar }) {
                 onClick={() => {
                   const nv = { ...valores };
                   if (nv[it.id] === v) delete nv[it.id]; else nv[it.id] = v;
-                  guardar({ valores: nv });
+                  guardarIntento({ valores: nv });
                 }}>{v}</button>
             ))}
           </div>
@@ -130,8 +190,8 @@ function TarjetaAlumno({ alumno, n, cont, calif, guardar }) {
 
       {estado === "normal" && cont.tipo === "nota" && (
         <label className="f en-linea nota-directa">Nota
-          <CampoEditable valor={calif?.nota == null ? "" : String(calif.nota).replace(".", ",")} inputMode="decimal" placeholder="0–10"
-            onGuardar={v => { const x = numero(v); if (x == null || (x >= 0 && x <= 10)) guardar({ nota: x }); }} />
+          <CampoEditable valor={notaActual == null ? "" : String(notaActual).replace(".", ",")} inputMode="decimal" placeholder="0–10"
+            onGuardar={v => { const x = numero(v); if (x == null || (x >= 0 && x <= 10)) guardarIntento({ nota: x }); }} />
         </label>
       )}
 

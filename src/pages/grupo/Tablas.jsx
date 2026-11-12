@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { notaContenido, fmt } from "../../lib/calc.js";
+import { notaContenido, textoIntentos, fmt } from "../../lib/calc.js";
 import { EVALS, notasAlumno, resumen } from "../../lib/notasGrupo.js";
 import { numero } from "../../components/ui.jsx";
 import DiarioSeguimiento from "./DiarioSeguimiento.jsx";
@@ -31,6 +31,7 @@ export default function Tablas({ g }) {
           if (k?.estado === "compensatorio") sit.push(`${c.nombre}: trabajo compensatorio${k.compensatorio?.motivo ? " (" + k.compensatorio.motivo + ")" : ""}${k.compensatorio?.descripcion ? " - " + k.compensatorio.descripcion : ""}`);
           if (k?.estado === "exento") sit.push(`${c.nombre}: exento`);
           if (k?.estado === "np") sit.push(`${c.nombre}: NP`);
+          if (r.repitio && (k?.estado ?? "normal") === "normal") sit.push(`${c.nombre}: ${textoIntentos(c, r)}`);
           if (c.tipo === "diario" && k?.estado !== "compensatorio" && k?.estado !== "exento") {
             if (r.total) sit.push(`${c.nombre}: asistencia ${r.presentes}/${r.total}`);
             if (r.debeTrabajo) sit.push(`${c.nombre}: debe hacer trabajo`);
@@ -104,6 +105,7 @@ export default function Tablas({ g }) {
                               {k?.estado === "exento" ? <span className="muted">—</span> : r.nota == null ? "—" : fmt(r.nota)}
                               {m && <sup className={`marca ${k.estado}`}>{m[0]}</sup>}
                               {r.debeTrabajo && <sup className="marca np">TR</sup>}
+                              {r.repitio && (k?.estado ?? "normal") === "normal" && <sup className="marca rep" title={textoIntentos(c, r)}>R{r.manual ? "✎" : ""}</sup>}
                               {r.excepcion && k?.estado !== "compensatorio" && <sup className="marca exento">X</sup>}
                               {c.tipo === "diario" && r.total > 0 && k?.estado !== "compensatorio" && k?.estado !== "exento" && <span className="asist">{r.presentes}/{r.total}</span>}
                             </td>
@@ -122,7 +124,7 @@ export default function Tablas({ g }) {
 
       <p className="pista">
         {esFinal ? "La nota final es la media de las notas reales de las evaluaciones con nota." : "Pasa el dedo o el ratón por una nota marcada para ver el detalle."}
-        {" "}T = trabajo compensatorio · E = exento · NP = no presentado · TR = debe hacer trabajo (no llega a la asistencia mínima) · X = excepción al mínimo. Pulsa una nota de boletín para cambiarla a mano; déjala vacía para volver a la automática ({curso.etapa === "BACH" ? "desde ,5 sube; desde 9,25 es 10" : "desde ,5 sube"}).
+        {" "}T = trabajo compensatorio · E = exento · NP = no presentado · R = ha repetido (pasa el dedo para ver los intentos) · TR = debe hacer trabajo (no llega a la asistencia mínima) · X = excepción al mínimo. Pulsa una nota de boletín para cambiarla a mano; déjala vacía para volver a la automática ({curso.etapa === "BACH" ? "desde ,5 sube; desde 9,25 es 10" : "desde ,5 sube"}).
       </p>
     </div>
   );

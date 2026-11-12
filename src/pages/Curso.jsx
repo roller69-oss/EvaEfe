@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase, q, mensajeError } from "../lib/supabase.js";
-import { fmt } from "../lib/calc.js";
+import { fmt, repeticion } from "../lib/calc.js";
 import { compararCodigo, enlaces } from "../lib/criterios.js";
 import { Aviso, BotonBorrar, CampoEditable, Cargando, numero } from "../components/ui.jsx";
 
@@ -216,6 +216,38 @@ function EditorContenido({ c, abierto, onAlternar, guardar, setCont, setError, o
               </select>
             </label>
           </div>
+
+          {c.tipo !== "diario" && (() => {
+            const rep = repeticion(c);
+            const g2 = cambios => guardar({ repeticion: { ...rep, ...cambios } });
+            return (
+              <div className="sub">
+                <h4>Repetir la prueba</h4>
+                <div className="fila">
+                  <label className="f" style={{ flex: "1 1 170px" }}>Quién puede repetir
+                    <select className="in" value={rep.modo} onChange={e => g2({ modo: e.target.value })}>
+                      <option value="no">Nadie</option>
+                      <option value="presentados">Solo quienes se presentaron</option>
+                      <option value="todos">Todos</option>
+                    </select>
+                  </label>
+                  {rep.modo !== "no" && <>
+                    <label className="f" style={{ flex: "0 1 110px" }}>Intentos extra
+                      <CampoEditable valor={rep.intentos} inputMode="numeric" onGuardar={v => { const n = Math.round(numero(v) ?? 1); if (n >= 1 && n <= 5) g2({ intentos: n }); }} />
+                    </label>
+                    <label className="f" style={{ flex: "1 1 150px" }}>Qué nota cuenta
+                      <select className="in" value={rep.cuenta} onChange={e => g2({ cuenta: e.target.value })}>
+                        <option value="mejor">La mejor</option>
+                        <option value="ultima">El último intento</option>
+                        <option value="media">La media de los intentos</option>
+                      </select>
+                    </label>
+                  </>}
+                </div>
+                {rep.modo !== "no" && <p className="pista" style={{ margin: 0 }}>Se guardan todos los intentos y queda constancia de quién repitió. A un alumno concreto se le puede dar o quitar el derecho, o elegir qué intento cuenta, desde Poner notas.</p>}
+              </div>
+            );
+          })()}
 
           {c.tipo === "diario" && (
             <div className="sub">
