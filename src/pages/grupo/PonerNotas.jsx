@@ -273,10 +273,10 @@ function PasarLista({ g, cont }) {
   const [abierta, setAbierta] = useState(false);
   const [fecha, setFecha] = useState(hoyISO());
   const marca = a => cal[a.id]?.[cont.id]?.extra?.asistencia;
-  const poner = (a, valor) => {
+  const poner = (a, valor, alternar = true) => {
     const c = cal[a.id]?.[cont.id];
     const extra = { ...(c?.extra || {}) };
-    if (extra.asistencia?.valor === valor) extra.asistencia = null; else extra.asistencia = { valor, fecha };
+    if (alternar && extra.asistencia?.valor === valor) extra.asistencia = null; else extra.asistencia = { valor, fecha };
     g.guardarCalif(a.id, cont.id, { extra });
   };
   const n = { vino: 0, falta: 0, pendiente: 0 };
@@ -284,7 +284,9 @@ function PasarLista({ g, cont }) {
     const v = marca(a)?.valor; if (v) n[v]++;
     if (asistenciaExamen(cont, cal[a.id]?.[cont.id]) === "pendiente") n.pendiente++;
   }
-  const sinMarca = alumnos.filter(a => !marca(a) && cal[a.id]?.[cont.id]?.estado !== "exento" && asistenciaExamen(cont, cal[a.id]?.[cont.id]) !== "evaluado");
+  // Para marcar a todos de golpe: todos menos exentos y los que ya tienen nota
+  const marcables = alumnos.filter(a => cal[a.id]?.[cont.id]?.estado !== "exento" && asistenciaExamen(cont, cal[a.id]?.[cont.id]) !== "evaluado");
+  const todos = valor => marcables.forEach(a => { if (marca(a)?.valor !== valor || marca(a)?.fecha !== fecha) poner(a, valor, false); });
 
   return (
     <div className="pasar-lista">
@@ -297,7 +299,10 @@ function PasarLista({ g, cont }) {
           <div className="fila">
             <label className="f en-linea">Día<input type="date" className="in" style={{ width: "auto" }} value={fecha} onChange={e => setFecha(e.target.value || hoyISO())} /></label>
             <span className="espacio" />
-            {sinMarca.length > 0 && <button type="button" className="btn sm primario" onClick={() => sinMarca.forEach(a => poner(a, "vino"))}>Todos vinieron ({sinMarca.length})</button>}
+            {marcables.length > 0 && <>
+              <button type="button" className="btn sm primario" onClick={() => todos("vino")}>Todos vinieron</button>
+              <button type="button" className="btn sm" onClick={() => todos("falta")}>Nadie vino</button>
+            </>}
           </div>
           {alumnos.map(a => {
             const m = marca(a)?.valor;
@@ -311,7 +316,7 @@ function PasarLista({ g, cont }) {
               </div>
             );
           })}
-          <p className="pista" style={{ margin: 0 }}>Quien vino y aún no tiene nota queda como pendiente de evaluar y conserva su derecho a repetir. Quien no vino no tiene derecho (salvo que se lo des a mano) y cuenta 0 al dar el contenido por terminado.</p>
+          <p className="pista" style={{ margin: 0 }}>Marca a todos de golpe y luego toca a quien sea distinto. Quien ya tiene nota no se toca. Quien vino y aún no tiene nota queda como pendiente de evaluar y conserva su derecho a repetir. Quien no vino no tiene derecho (salvo que se lo des a mano) y cuenta 0 al dar el contenido por terminado.</p>
         </div>
       )}
     </div>
