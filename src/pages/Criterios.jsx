@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { supabase, q, mensajeError } from "../lib/supabase.js";
 import { fmt } from "../lib/calc.js";
 import { compararCodigo, enlaces, parsearCriterios, pesoEnCriterio } from "../lib/criterios.js";
-import { Aviso, BotonBorrar, CampoEditable, Cargando, numero } from "../components/ui.jsx";
+import { Aviso, BotonBorrar, CampoEditable, Cargando, TextoEditable, numero } from "../components/ui.jsx";
 
 export default function Criterios() {
   const { id } = useParams();
@@ -109,7 +109,7 @@ export default function Criterios() {
           <section className="panel ce" key={ce.id}>
             <div className="fila">
               <span className="ce-codigo">{ce.codigo}</span>
-              <CampoEditable valor={ce.descripcion} placeholder="Descripción de la competencia" style={{ flex: "1 1 240px" }}
+              <TextoEditable valor={ce.descripcion} placeholder="Descripción de la competencia" style={{ flex: "1 1 240px" }}
                 onGuardar={v => guardar("competencias", ce.id, { descripcion: v.trim() })} />
               {!crs.length && <BotonBorrar texto="Quitar" onConfirmar={() => borrar("competencias", ce.id)} />}
             </div>
@@ -120,7 +120,7 @@ export default function Criterios() {
                 <div className="criterio" key={cr.id}>
                   <div className="criterio-cab">
                     <span className="cr-codigo">{cr.codigo}</span>
-                    <CampoEditable valor={cr.descripcion} placeholder="Descripción del criterio" onGuardar={v => guardar("criterios", cr.id, { descripcion: v.trim() })} />
+                    <TextoEditable valor={cr.descripcion} placeholder="Descripción del criterio" onGuardar={v => guardar("criterios", cr.id, { descripcion: v.trim() })} />
                     <label className="f en-linea" title="Peso del criterio dentro de su competencia">Peso
                       <CampoEditable valor={cr.peso} inputMode="decimal" style={{ width: 60 }} onGuardar={v => guardar("criterios", cr.id, { peso: Math.max(0, numero(v) ?? 1) })} />
                     </label>

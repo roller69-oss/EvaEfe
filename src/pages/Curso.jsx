@@ -306,11 +306,12 @@ function EditorContenido({ c, abierto, onAlternar, guardar, setCont, setError, o
                 <div className="item-fila crit" key={i}>
                   <select className="in" value={e.criterio_id} aria-label="Criterio"
                     onChange={ev => guardarLinks(links.map((x, j) => (j === i ? { ...x, criterio_id: ev.target.value } : x)))}>
-                    {criterios.map(cr => <option key={cr.id} value={cr.id}>{cr.codigo}{cr.descripcion ? " · " + cr.descripcion.slice(0, 60) : ""}</option>)}
+                    {criterios.map(cr => <option key={cr.id} value={cr.id}>{cr.codigo}{cr.descripcion ? " · " + (cr.descripcion.length > 70 ? cr.descripcion.slice(0, 70) + "…" : cr.descripcion) : ""}</option>)}
                   </select>
                   <span className="pct"><CampoEditable valor={e.pct ?? 100} inputMode="decimal" style={{ width: 80 }} aria-label="Porcentaje"
                     onGuardar={v => guardarLinks(links.map((x, j) => (j === i ? { ...x, pct: Math.max(0, numero(v) ?? 100) } : x)))} /></span>
                   <BotonBorrar texto="Quitar" onConfirmar={() => guardarLinks(links.filter((_, j) => j !== i))} />
+                  {criterios.find(cr => cr.id === e.criterio_id)?.descripcion && <p className="desc-criterio">{criterios.find(cr => cr.id === e.criterio_id).descripcion}</p>}
                 </div>
               ))}
               <div className="fila">

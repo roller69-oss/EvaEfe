@@ -313,3 +313,14 @@ label.btn { cursor: pointer; }
 .chip.asis.falta { background: var(--rojo-suave); color: var(--rojo); }
 .marca.pend { background: var(--ambar-suave); color: var(--ambar); }
 b.ambar { color: var(--ambar); }
+
+/* ---------- Textos completos de criterios ---------- */
+textarea.in.texto-largo { min-height: 40px; resize: none; overflow: hidden; line-height: 1.4; font-family: var(--f-texto); background: var(--superficie); }
+.criterio-cab { align-items: start; }
+.criterio-cab > :not(.in):not(textarea) { margin-top: 8px; }
+.desc-criterio { grid-column: 1 / -1; margin: -2px 0 4px; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.leyenda-criterios { background: var(--superficie); border: 1px solid var(--linea); border-radius: 12px; padding: 10px 14px; }
+.leyenda-criterios summary { cursor: pointer; font-weight: 700; color: var(--azul); }
+.ley-ce { margin-top: 10px; }
+.ley-ce p { margin: 4px 0; max-width: 90ch; line-height: 1.45; }
+.ley-cr { padding-left: 16px; font-size: 13.5px; }

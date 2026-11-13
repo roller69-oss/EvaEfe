@@ -18,6 +18,29 @@ export function CampoEditable({ valor, onGuardar, className = "in", tipo = "text
   );
 }
 
+/** Texto largo editable: crece con el contenido y guarda al salir del campo. */
+export function TextoEditable({ valor, onGuardar, className = "in texto-largo", ...rest }) {
+  const [v, setV] = useState(valor ?? "");
+  const ref = useRef();
+  useEffect(() => setV(valor ?? ""), [valor]);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    el.style.height = "auto"; el.style.height = el.scrollHeight + 2 + "px";
+  }, [v]);
+  return (
+    <textarea
+      {...rest}
+      ref={ref}
+      rows={1}
+      className={className}
+      value={v}
+      onChange={e => setV(e.target.value)}
+      onBlur={() => { if (v !== (valor ?? "")) onGuardar(v); }}
+      onKeyDown={e => { if (e.key === "Escape") setV(valor ?? ""); }}
+    />
+  );
+}
+
 /** Botón de borrado en dos pulsaciones (sin diálogos del navegador). */
 export function BotonBorrar({ onConfirmar, texto = "Borrar", confirmar = "¿Seguro?", className = "" }) {
   const [armado, setArmado] = useState(false);

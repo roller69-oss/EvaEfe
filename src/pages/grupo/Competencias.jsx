@@ -82,6 +82,16 @@ export default function Competencias({ g }) {
           </tbody>
         </table>
       </div>
+      <details className="leyenda-criterios">
+        <summary>Ver el texto completo de las competencias y criterios</summary>
+        {bloques.map(({ ce, crs }) => (
+          <div key={ce.id} className="ley-ce">
+            <p><b>{ce.codigo}.</b> {ce.descripcion}</p>
+            {crs.map(c => <p key={c.id} className="ley-cr"><b>{c.codigo}</b> {c.descripcion}</p>)}
+          </div>
+        ))}
+      </details>
+
       <p className="pista">
         Nota de cada criterio = media de las herramientas que lo evalúan, ponderada por su carga (o el peso que hayas puesto). Nota de cada competencia = media de sus criterios con su peso.
         {" "}Los criterios en gris no se evalúan en este periodo. Pasa el ratón por un código para ver su descripción.
