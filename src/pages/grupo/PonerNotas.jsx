@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { notaContenido, detalleRubrica, derechoRepetir, repeticion, asistenciaExamen, fmt } from "../../lib/calc.js";
 import { BotonBorrar, CampoEditable, NombreLista, numero } from "../../components/ui.jsx";
 import Diario from "./Diario.jsx";
+import ImportarNotas from "./ImportarNotas.jsx";
 import { colorDe, varColor } from "../../lib/colores.js";
 
 const ESTADOS = [["normal", "Normal"], ["compensatorio", "Trabajo"], ["exento", "Exento"], ["np", "NP"]];
@@ -24,6 +25,7 @@ export default function PonerNotas({ g }) {
   const [filtro, setFiltro] = useState("todos"); // todos | pendientes | terminados
   const [busqueda, setBusqueda] = useState("");
   const [abierto, setAbierto] = useState(null);
+  const [importando, setImportando] = useState(false);
   const cal = g.d.cal;
   // Terminado = marcado a mano como finalizado, o exento (no tiene nada que hacer)
   const terminado = a => { const c = cal[a.id]?.[cont?.id]; return Boolean(c?.extra?.finalizado) || c?.estado === "exento"; };
@@ -71,6 +73,10 @@ export default function PonerNotas({ g }) {
       )}
 
       {cont && cont.tipo !== "diario" && <PasarLista key={"pl" + cont.id} g={g} cont={cont} />}
+
+      {cont?.tipo === "nota" && (importando
+        ? <ImportarNotas key={"imp" + cont.id} g={g} cont={cont} onCerrar={() => setImportando(false)} />
+        : <div><button type="button" className="btn sm" onClick={() => setImportando(true)}>Importar notas del aula virtual</button></div>)}
 
       {cont?.tipo === "diario" && <Diario key={cont.id} g={g} cont={cont} />}
 

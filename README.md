@@ -104,4 +104,5 @@ npm run dev              # http://localhost:5173
 - [x] Pasar lista del examen: vino (pendiente de evaluar) / no vino
 - [x] Colores por contenido (supabase/07_colores.sql), buscador, tarjetas plegadas y alumnos terminados
 - [x] Colores por grupo (supabase/08_color_grupos.sql), portada con resumen y cambio rápido entre grupos del curso
+- [x] Importar notas de un cuestionario del aula virtual (Excel de resultados) en contenidos de nota directa
 - [ ] Estadísticas por grupo y curso

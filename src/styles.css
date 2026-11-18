@@ -376,3 +376,14 @@ textarea.in.texto-largo { min-height: 40px; resize: none; overflow: hidden; line
 .titulo-grupo { display: inline-flex; align-items: center; gap: 10px; }
 .titulo-grupo::before { content: ""; width: 14px; height: 14px; border-radius: 4px; background: var(--col); }
 .boton-color { border: 0; cursor: pointer; width: 26px; height: 26px; border-radius: 7px; }
+
+/* ---------- Importar notas del aula virtual ---------- */
+.importar-notas { gap: 10px; }
+.imp-bloque { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 10px; background: var(--papel); }
+.imp-bloque.aviso-ambar { background: var(--ambar-suave); }
+.imp-bloque h4 { color: var(--tinta); }
+.imp-lista { display: flex; flex-direction: column; max-height: 300px; overflow: auto; }
+.imp-fila { padding: 4px 0; border-bottom: 1px solid var(--rejilla); gap: 6px 10px; }
+.imp-fila:last-child { border-bottom: 0; }
+.imp-nombre { flex: 1 1 180px; min-width: 0; }
+.imp-fila > b, .imp-nombre > b { font-family: var(--f-num); }

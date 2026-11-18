@@ -3,6 +3,12 @@
 
 /** Devuelve { filas: string[][], columnas: [{indice, titulo, muestra}], sugerida } */
 export async function leerListado(file) {
+  const filas = await leerFilas(file);
+  return { filas, ...detectarColumna(filas) };
+}
+
+/** Lee la primera hoja de un Excel/ODS/CSV como filas de texto. */
+export async function leerFilas(file) {
   const XLSX = await import("xlsx");
   const buf = await file.arrayBuffer();
   let wb;
@@ -15,9 +21,8 @@ export async function leerListado(file) {
     wb = XLSX.read(buf, { type: "array" });
   }
   const hoja = wb.Sheets[wb.SheetNames[0]];
-  const filas = XLSX.utils.sheet_to_json(hoja, { header: 1, raw: false, defval: "" })
+  return XLSX.utils.sheet_to_json(hoja, { header: 1, raw: false, defval: "" })
     .map(r => r.map(c => String(c ?? "").replace(/\s+/g, " ").trim()));
-  return { filas, ...detectarColumna(filas) };
 }
 
 const pareceNombre = s => /^[\p{L}][\p{L} .'’-]*,\s*[\p{L}][\p{L} .'’-]*$/u.test(s);
@@ -53,3 +58,49 @@ export function nombresDeColumna(filas, indice) {
 }
 
 export const normalizar = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+
+/* ---------- Resultados de un cuestionario del aula virtual (Moodle) ---------- */
+
+/**
+ * Busca la cabecera con "Apellido(s)", "Nombre" y "Calificación/X" y devuelve
+ * [{ apellidos, nombre, nota (sobre 10) | null, estado }]. Ignora correos, tiempos, preguntas y el promedio.
+ */
+export function leerResultadosAula(filas) {
+  const iCab = filas.findIndex(r => r.some(c => /^apellido/i.test(c)) && r.some(c => /^nombre$/i.test(c)) && r.some(c => /^calificaci[oó]n/i.test(c)));
+  if (iCab < 0) throw new Error("cabecera");
+  const cab = filas[iCab];
+  const iApe = cab.findIndex(c => /^apellido/i.test(c));
+  const iNom = cab.findIndex(c => /^nombre$/i.test(c));
+  const iCal = cab.findIndex(c => /^calificaci[oó]n/i.test(c));
+  const iEst = cab.findIndex(c => /^estado$/i.test(c));
+  const m = cab[iCal].match(/\/\s*([\d.,]+)/);
+  const escala = m ? Number(m[1].replace(/\.(?=\d{3}\b)/g, "").replace(",", ".")) : 10;
+  const out = [];
+  for (const r of filas.slice(iCab + 1)) {
+    const apellidos = (r[iApe] || "").trim(), nombre = (r[iNom] || "").trim();
+    if (!apellidos && !nombre) continue;
+    if (/promedio/i.test(apellidos)) continue;
+    const bruto = (r[iCal] || "").trim();
+    const n = /^[\d.,]+$/.test(bruto) ? Number(bruto.replace(",", ".")) : null;
+    const nota = n == null || Number.isNaN(n) || !escala ? null : Math.max(0, Math.min(10, (n / escala) * 10));
+    out.push({ apellidos, nombre, nota: nota == null ? null : Math.round(nota * 100) / 100, estado: iEst >= 0 ? r[iEst] || "" : "" });
+  }
+  return { filas: out, escala };
+}
+
+const tokens = t => normalizar(t).replace(/[^a-z0-9ñ ]/g, " ").split(" ").filter(x => x.length > 1);
+
+/** Empareja una persona del archivo con un alumno del grupo ("Apellidos, Nombre"). Devuelve el alumno o null. */
+export function emparejar(fila, alumnos) {
+  const clave = normalizar(`${fila.apellidos} ${fila.nombre}`);
+  const exacto = alumnos.filter(a => {
+    const i = a.nombre.lastIndexOf(",");
+    const k = i < 0 ? normalizar(a.nombre) : normalizar(`${a.nombre.slice(0, i)} ${a.nombre.slice(i + 1)}`);
+    return k === clave;
+  });
+  if (exacto.length === 1) return exacto[0];
+  // Si no coincide exacto: todas las palabras del archivo están en el nombre del alumno (o al revés), y solo hay uno así
+  const tf = tokens(`${fila.apellidos} ${fila.nombre}`);
+  const cand = alumnos.filter(a => { const ta = tokens(a.nombre); return tf.every(t => ta.includes(t)) || ta.every(t => tf.includes(t)); });
+  return cand.length === 1 ? cand[0] : null;
+}
