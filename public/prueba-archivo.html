@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prueba guardar en el Cloud · EvaEfe</title>
+<style>
+  :root { --bg:#F3F6FA; --fg:#18212F; --muted:#5A6577; --line:#D7DFEA; --ok:#26734A; --okbg:#E1F2E8; --ko:#C02E28; --kobg:#FBE8E6; --azul:#1D4CB3; --sup:#FFFFFF; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0F141C; --fg:#E5EBF4; --muted:#98A4B7; --line:#2A3443; --ok:#71CC96; --okbg:#17301F; --ko:#FF8078; --kobg:#3A1C1C; --azul:#86A9FF; --sup:#161D28; color-scheme: dark; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 system-ui, sans-serif; padding:20px max(16px, env(safe-area-inset-left)); }
+  main { max-width:640px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  h1 { font-size:22px; margin:0; } h2 { font-size:17px; margin:0; }
+  p { margin:0; } .muted { color:var(--muted); }
+  section { background:var(--sup); border:1px solid var(--line); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:10px; }
+  button, label.boton { padding:10px 16px; border-radius:9px; border:0; background:var(--azul); color:#fff; font-weight:700; font-size:15px; cursor:pointer; align-self:flex-start; font-family:inherit; }
+  .paso { border-radius:10px; padding:10px 12px; }
+  .ok { background:var(--okbg); color:var(--ok); } .ko { background:var(--kobg); color:var(--ko); }
+</style>
+</head>
+<body>
+<main>
+  <h1>¿Puede EvaEfe guardar y abrir un archivo en tu Cloud?</h1>
+  <p class="muted">Haz la prueba en el ordenador y en el móvil. El archivo es de prueba (sin datos de alumnos). Tu equipo: <b id="eq"></b></p>
+
+  <section>
+    <h2>1. Guardar</h2>
+    <p>Pulsa el botón y guarda el archivo <b>evaefe-prueba.json</b> dentro de tu carpeta de EducaMadrid Cloud (en el ordenador, la carpeta de Nextcloud; en el móvil, si te deja elegir Nextcloud).</p>
+    <button id="guardar">Guardar archivo de prueba</button>
+    <div id="r1"></div>
+  </section>
+
+  <section>
+    <h2>2. Comprobar en el Cloud</h2>
+    <p>Entra en cloud.educa.madrid.org (o en la app de Nextcloud) y mira si aparece <b>evaefe-prueba.json</b>.</p>
+  </section>
+
+  <section>
+    <h2>3. Abrir</h2>
+    <p>Ahora ábrelo desde aquí (en el otro dispositivo si quieres probar el cambio de móvil a ordenador).</p>
+    <label class="boton">Abrir archivo<input type="file" id="abrir" accept=".json,application/json" hidden></label>
+    <div id="r3"></div>
+  </section>
+
+  <p class="muted">Cuando termines, mándale a Claude una captura en cada dispositivo.</p>
+</main>
+<script>
+const puedeGuardarDirecto = "showSaveFilePicker" in window;
+document.getElementById("eq").textContent = (/Android|iPhone|iPad/i.test(navigator.userAgent) ? "móvil/tablet" : "ordenador") + " · " +
+  (puedeGuardarDirecto ? "puede guardar directamente en una carpeta" : "solo puede descargar el archivo");
+
+function msg(id, ok, texto) {
+  const el = document.getElementById(id);
+  el.innerHTML = ""; const d = document.createElement("div");
+  d.className = "paso " + (ok ? "ok" : "ko"); d.textContent = texto; el.append(d);
+}
+let manejador = null;
+document.getElementById("guardar").onclick = async () => {
+  const datos = JSON.stringify({ app: "EvaEfe", prueba: true, guardado: new Date().toLocaleString("es-ES"), equipo: navigator.userAgent.slice(0, 60) }, null, 2);
+  if (puedeGuardarDirecto) {
+    try {
+      manejador = await window.showSaveFilePicker({ suggestedName: "evaefe-prueba.json", types: [{ description: "EvaEfe", accept: { "application/json": [".json"] } }] });
+      const w = await manejador.createWritable(); await w.write(datos); await w.close();
+      const w2 = await manejador.createWritable(); await w2.write(datos.replace('"prueba": true', '"prueba": "guardado dos veces"')); await w2.close();
+      msg("r1", true, "Guardado directamente en la carpeta elegida (y vuelto a guardar sin preguntar). Comprueba que aparece en tu Cloud.");
+    } catch (e) {
+      msg("r1", false, e.name === "AbortError" ? "Cancelado. Vuelve a pulsar y elige tu carpeta del Cloud." : "No se pudo guardar: " + e.message);
+    }
+  } else {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([datos], { type: "application/json" }));
+    a.download = "evaefe-prueba.json"; document.body.append(a); a.click(); a.remove();
+    msg("r1", true, "Este navegador lo descarga en Descargas. Para que llegue al Cloud tendrías que subirlo con la app de Nextcloud (o ver si al descargar te deja elegir Nextcloud).");
+  }
+};
+document.getElementById("abrir").onchange = e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  const fr = new FileReader();
+  fr.onload = () => {
+    try { const j = JSON.parse(fr.result); msg("r3", j.app === "EvaEfe", j.app === "EvaEfe" ? `Abierto bien. Se guardó el ${j.guardado}.` : "Ese archivo no es el de la prueba."); }
+    catch { msg("r3", false, "No se pudo leer el archivo."); }
+  };
+  fr.readAsText(f);
+};
+</script>
+</body>
+</html>
