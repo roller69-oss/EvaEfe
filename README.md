@@ -102,4 +102,5 @@ npm run dev              # http://localhost:5173
 - [x] Repetir pruebas: derecho por regla o a mano, varios intentos, cuenta la mejor/última/media (supabase/05_repeticion.sql)
 - [x] Dar por terminado un contenido en cada grupo: los vacíos cuentan 0 (supabase/06_terminados.sql)
 - [x] Pasar lista del examen: vino (pendiente de evaluar) / no vino
+- [x] Colores por contenido (supabase/07_colores.sql), buscador, tarjetas plegadas y alumnos terminados
 - [ ] Estadísticas por grupo y curso

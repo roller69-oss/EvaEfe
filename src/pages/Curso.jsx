@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase, q, mensajeError } from "../lib/supabase.js";
 import { fmt, repeticion } from "../lib/calc.js";
 import { compararCodigo, enlaces } from "../lib/criterios.js";
+import { colorDe, varColor, N_COLORES } from "../lib/colores.js";
 import { Aviso, BotonBorrar, CampoEditable, Cargando, numero } from "../components/ui.jsx";
 
 const EVALS = [1, 2, 3];
@@ -86,7 +87,7 @@ export default function Curso() {
           <>
             <div className="reparto">
               {deEsta.map(c => (
-                <span key={c.id} style={{ flex: `${Math.max(Number(c.peso) || 0, 0.0001)} 1 0` }} title={`${c.nombre}: ${fmt(Number(c.peso), 0)}%`}>
+                <span key={c.id} style={{ flex: `${Math.max(Number(c.peso) || 0, 0.0001)} 1 0`, "--col": varColor(colorDe(c, contenidos)) }} title={`${c.nombre}: ${fmt(Number(c.peso), 0)}%`}>
                   {c.nombre} · {fmt(Number(c.peso), 0)}%
                 </span>
               ))}
@@ -102,7 +103,7 @@ export default function Curso() {
 
         <div className="lista-contenidos">
           {deEsta.map(c => (
-            <EditorContenido key={c.id} c={c} abierto={abierto === c.id}
+            <EditorContenido key={c.id} c={c} abierto={abierto === c.id} color={colorDe(c, contenidos)}
               onAlternar={() => setAbierto(abierto === c.id ? null : c.id)}
               guardar={(cambios) => guardar("contenidos", c.id, cambios, () => setCont(c.id, x => ({ ...x, ...cambios })))}
               setCont={fn => setCont(c.id, fn)}
@@ -163,7 +164,7 @@ export default function Curso() {
   );
 }
 
-function EditorContenido({ c, abierto, onAlternar, guardar, setCont, setError, onBorrar, criterios }) {
+function EditorContenido({ c, abierto, onAlternar, guardar, setCont, setError, onBorrar, criterios, color }) {
   const anot = Array.isArray(c.anotaciones) ? c.anotaciones : [];
 
   async function nuevoItem() {
@@ -186,8 +187,9 @@ function EditorContenido({ c, abierto, onAlternar, guardar, setCont, setError, o
   const guardarLinks = lista => guardar({ criterios: lista });
 
   return (
-    <article className={`contenido-card ${abierto ? "abierto" : ""}`}>
+    <article className={`contenido-card ${abierto ? "abierto" : ""}`} style={{ "--col": varColor(color) }}>
       <button type="button" className="contenido-cab" onClick={onAlternar} aria-expanded={abierto}>
+        <span className="muestra" aria-hidden="true" />
         <span className="nombre">{c.nombre}</span>
         <span className="chip">{c.tipo === "nota" ? "Nota directa" : c.tipo === "diario" ? "Diario" : `Rúbrica · ${c.items.length} ítem${c.items.length === 1 ? "" : "s"}`}</span>
         <span className="peso">{fmt(Number(c.peso), 0)}%</span>
@@ -261,6 +263,14 @@ function EditorContenido({ c, abierto, onAlternar, guardar, setCont, setError, o
               <p className="pista" style={{ margin: 0 }}>Cada día se valora con una cara: 😠 1 = 0 · 🙁 2 = 2,5 · 😐 3 = 5 · 🙂 4 = 7,5 · 😄 5 = 10. La nota es la media de los días que vino. Si su asistencia no llega al mínimo, el diario le cuenta 0 y debe hacer un trabajo (salvo excepción).</p>
             </div>
           )}
+
+          <div className="paleta" role="group" aria-label="Color del contenido">
+            <span className="small muted">Color</span>
+            {Array.from({ length: N_COLORES }, (_, k) => k + 1).map(n => (
+              <button key={n} type="button" style={{ "--col": varColor(n) }} aria-pressed={c.color === n} aria-label={`Color ${n}`} onClick={() => guardar({ color: n })} />
+            ))}
+            <button type="button" className="auto" aria-pressed={!c.color} onClick={() => guardar({ color: null })}>Automático</button>
+          </div>
 
           {c.tipo === "rubrica" && (
             <div className="sub">

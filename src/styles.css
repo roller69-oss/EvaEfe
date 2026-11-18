@@ -1,5 +1,6 @@
 /* EvaEfe · tinta azul sobre papel claro; rojo solo para avisos y suspensos */
 :root {
+  --p1: #1D4CB3; --p2: #1E7A52; --p3: #B4511F; --p4: #7A3DB8; --p5: #B42E5C; --p6: #0E7C86; --p7: #8A6A12; --p8: #4A5568;
   --papel: #F3F6FA; --superficie: #FFFFFF; --tinta: #18212F; --muted: #5A6577; --linea: #D7DFEA; --rejilla: #E8EDF4;
   --azul: #1D4CB3; --azul-suave: #E4ECFB; --rojo: #C02E28; --rojo-suave: #FBE8E6; --ambar: #9A6514; --ambar-suave: #FBF0DC; --verde: #26734A; --verde-suave: #E1F2E8;
   --f-titulo: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
@@ -9,6 +10,7 @@
 }
 @media (prefers-color-scheme: dark) {
   :root {
+    --p1: #86A9FF; --p2: #71CC96; --p3: #F5A06B; --p4: #C39BF5; --p5: #F58FB4; --p6: #5CCFD9; --p7: #E6C25E; --p8: #A9B4C6;
     --papel: #0F141C; --superficie: #161D28; --tinta: #E5EBF4; --muted: #98A4B7; --linea: #2A3443; --rejilla: #1D2633;
     --azul: #86A9FF; --azul-suave: #1C2742; --rojo: #FF8078; --rojo-suave: #3A1C1C; --ambar: #E6B25E; --ambar-suave: #33281A; --verde: #71CC96; --verde-suave: #17301F;
     color-scheme: dark;
@@ -99,7 +101,7 @@ label.check input { width: 20px; height: 20px; accent-color: var(--azul); }
 .seg button[aria-pressed="true"] { background: var(--azul-suave); color: var(--azul); }
 .reparto { display: flex; gap: 3px; border-radius: 9px; overflow: hidden; min-height: 34px; }
 .reparto span { background: var(--azul-suave); color: var(--azul); font-size: 12.5px; font-weight: 700; padding: 8px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.reparto span:nth-child(2n) { background: color-mix(in srgb, var(--azul) 22%, var(--superficie)); }
+.reparto span[style*="--col"] { background: var(--col); color: var(--superficie); }
 .lista-contenidos { display: flex; flex-direction: column; gap: 8px; }
 .contenido-card { background: var(--superficie); border: 1px solid var(--linea); border-radius: 12px; }
 .contenido-card.abierto { border-color: var(--azul); }
@@ -324,3 +326,38 @@ textarea.in.texto-largo { min-height: 40px; resize: none; overflow: hidden; line
 .ley-ce { margin-top: 10px; }
 .ley-ce p { margin: 4px 0; max-width: 90ch; line-height: 1.45; }
 .ley-cr { padding-left: 16px; font-size: 13.5px; }
+
+/* ---------- Tarjetas plegadas, buscador y filtros ---------- */
+.buscar-filtrar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.buscador { flex: 1 1 220px; width: auto; background: var(--superficie); }
+.tarjetas-alumnos { grid-template-columns: 1fr; gap: 6px; }
+@media (min-width: 900px) { .tarjetas-alumnos { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } .tarjeta-alumno.abierta { grid-column: 1 / -1; } }
+.tarjeta-plegada { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; background: var(--superficie); border: 1px solid var(--linea); border-radius: 10px; padding: 8px 10px; min-height: 48px; cursor: pointer; font: inherit; color: var(--tinta); }
+.tarjeta-plegada:hover { border-color: var(--azul); }
+.tarjeta-plegada .nombre { flex: 1; min-width: 0; line-height: 1.25; }
+.tarjeta-plegada.finalizada { background: var(--papel); }
+.tarjeta-plegada.finalizada .nombre { color: var(--muted); }
+.tarjeta-plegada.estado-compensatorio { border-color: var(--ambar); }
+.tarjeta-plegada.estado-np { border-color: var(--rojo); }
+.check-fin { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--linea); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex: none; }
+.check-fin.si { background: var(--verde); border-color: var(--verde); color: var(--superficie); }
+.punto { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.punto.pendiente { background: var(--ambar); }
+.punto.falta { background: var(--rojo); }
+.cab-abierta { cursor: pointer; }
+.cab-abierta .plegar { color: var(--muted); font-size: 14px; }
+.tarjeta-alumno.abierta { border-color: var(--azul); box-shadow: 0 0 0 3px var(--azul-suave); }
+.pie-tarjeta { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--rejilla); padding-top: 10px; }
+
+/* ---------- Colores de contenidos ---------- */
+.muestra { width: 16px; height: 16px; border-radius: 5px; background: var(--col); flex: none; display: inline-block; }
+.contenido-card { border-left: 5px solid var(--col, var(--linea)); }
+.paleta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.paleta button { width: 34px; height: 34px; border-radius: 9px; border: 2px solid transparent; background: var(--col); cursor: pointer; }
+.paleta button[aria-pressed="true"] { border-color: var(--tinta); box-shadow: 0 0 0 2px var(--superficie) inset; }
+.paleta .auto { width: auto; padding: 0 10px; background: var(--papel); border-color: var(--linea); font-size: 12.5px; font-weight: 700; color: var(--muted); }
+.paleta .auto[aria-pressed="true"] { border-color: var(--azul); color: var(--azul); }
+.hoja thead th.con-color { box-shadow: inset 0 4px 0 var(--col); }
+.selector-notas .muestra { width: 20px; height: 20px; }
+.elegir-contenido { display: flex; align-items: center; gap: 8px; flex: 1 1 240px; min-width: 0; }
+.elegir-contenido select { flex: 1; }

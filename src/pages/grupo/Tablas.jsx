@@ -3,6 +3,7 @@ import { notaContenido, textoIntentos, asistenciaExamen, fmt } from "../../lib/c
 import { EVALS, notasAlumno, resumen } from "../../lib/notasGrupo.js";
 import { numero } from "../../components/ui.jsx";
 import DiarioSeguimiento from "./DiarioSeguimiento.jsx";
+import { colorDe, varColor } from "../../lib/colores.js";
 
 const MARCA = { compensatorio: ["T", "Trabajo compensatorio"], exento: ["E", "Exento"], np: ["NP", "No presentado"] };
 
@@ -97,7 +98,7 @@ export default function Tablas({ g }) {
                 <th className="fija">Alumno</th>
                 {esFinal
                   ? EVALS.map(e => <th key={e}>{e}ª Ev.</th>)
-                  : cs.map(c => <th key={c.id} className={c.terminado ? "" : "en-curso"} title={c.terminado ? "Terminado" : "En curso: los vacíos aún no cuentan"}><span className="cab-cont">{c.nombre}</span><span className="cab-peso">{fmt(Number(c.peso), 0)}%{c.terminado ? " ✓" : " · en curso"}</span></th>)}
+                  : cs.map(c => <th key={c.id} className={`con-color ${c.terminado ? "" : "en-curso"}`} style={{ "--col": varColor(colorDe(c, contenidos)) }} title={c.terminado ? "Terminado" : "En curso: los vacíos aún no cuentan"}><span className="cab-cont">{c.nombre}</span><span className="cab-peso">{fmt(Number(c.peso), 0)}%{c.terminado ? " ✓" : " · en curso"}</span></th>)}
                 <th className="calc">Real</th>
                 <th className="calc">Boletín</th>
               </tr>
