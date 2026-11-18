@@ -9,6 +9,7 @@ export function useGrupo(id) {
   const pendientes = useRef(new Map()); // clave -> {timer, cambios}
 
   const cargar = useCallback(async () => {
+    setD(null);
     try {
       const grupo = await q(supabase.from("grupos").select("*, cursos(*)").eq("id", id).single());
       const [alumnos, contenidos] = await Promise.all([
@@ -34,7 +35,8 @@ export function useGrupo(id) {
       ]);
       // Días del diario de este grupo (vacío si aún no se ejecutó 03_diario.sql)
       const { data: sesiones } = await supabase.from("sesiones_diario").select("id, contenido_id, fecha").eq("grupo_id", id).order("fecha");
-      setD({ grupo, curso: grupo.cursos, alumnos, contenidos: conTerminados(conSesiones(contenidos, sesiones || []), grupo.terminados), sesiones: sesiones || [], cal, aj, competencias: competencias || [], criterios: criterios || [] });
+      const { data: todosGrupos } = await supabase.from("grupos").select("*");
+      setD({ grupo, todosGrupos: todosGrupos || [], curso: grupo.cursos, alumnos, contenidos: conTerminados(conSesiones(contenidos, sesiones || []), grupo.terminados), sesiones: sesiones || [], cal, aj, competencias: competencias || [], criterios: criterios || [] });
     } catch (e) { setError(mensajeError(e)); }
   }, [id]);
 

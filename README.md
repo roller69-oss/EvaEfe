@@ -103,4 +103,5 @@ npm run dev              # http://localhost:5173
 - [x] Dar por terminado un contenido en cada grupo: los vacíos cuentan 0 (supabase/06_terminados.sql)
 - [x] Pasar lista del examen: vino (pendiente de evaluar) / no vino
 - [x] Colores por contenido (supabase/07_colores.sql), buscador, tarjetas plegadas y alumnos terminados
+- [x] Colores por grupo (supabase/08_color_grupos.sql), portada con resumen y cambio rápido entre grupos del curso
 - [ ] Estadísticas por grupo y curso

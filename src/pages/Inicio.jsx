@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase, q, mensajeError } from "../lib/supabase.js";
 import { REDONDEO_POR_ETAPA } from "../lib/calc.js";
 import { Aviso, Cargando } from "../components/ui.jsx";
+import { colorGrupo, varColor } from "../lib/colores.js";
 
 export default function Inicio() {
   const [cursos, setCursos] = useState(null);
@@ -11,7 +12,7 @@ export default function Inicio() {
 
   async function cargar() {
     try {
-      const data = await q(supabase.from("cursos").select("*, grupos(*)").order("orden").order("created_at"));
+      const data = await q(supabase.from("cursos").select("*, grupos(*, alumnos(count))").order("orden").order("created_at"));
       data.forEach(c => c.grupos.sort((a, b) => a.orden - b.orden || a.nombre.localeCompare(b.nombre, "es")));
       setCursos(data);
     } catch (e) { setError(mensajeError(e)); }
@@ -39,14 +40,18 @@ export default function Inicio() {
   return (
     <>
       <Aviso error={error} onCerrar={() => setError("")} />
-      <h2>Mis cursos</h2>
+      <div className="portada">
+        <p className="fecha-hoy">{fechaHoy()}</p>
+        <h2>Mis cursos</h2>
+        <p className="muted" style={{ margin: 0 }}>{cursos.length} curso{cursos.length === 1 ? "" : "s"} · {cursos.reduce((n, c) => n + c.grupos.length, 0)} grupos · {cursos.reduce((n, c) => n + c.grupos.reduce((m, g) => m + (g.alumnos?.[0]?.count ?? 0), 0), 0)} alumnos</p>
+      </div>
       {!cursos.length && (
         <div className="vacio">
           <p>Empieza creando tus cursos, por ejemplo <b>3º ESO</b> y <b>1º Bachillerato</b>. Cada curso tiene sus contenidos y porcentajes, y dentro creas sus grupos.</p>
         </div>
       )}
       <div className="cursos">
-        {cursos.map(c => <TarjetaCurso key={c.id} curso={c} onCrearGrupo={crearGrupo} />)}
+        {cursos.map(c => <TarjetaCurso key={c.id} curso={c} onCrearGrupo={crearGrupo} todos={cursos.flatMap(x => x.grupos)} />)}
       </div>
 
       <form className="panel" onSubmit={crearCurso}>
@@ -70,7 +75,7 @@ export default function Inicio() {
   );
 }
 
-function TarjetaCurso({ curso, onCrearGrupo }) {
+function TarjetaCurso({ curso, onCrearGrupo, todos }) {
   const [nombre, setNombre] = useState("");
   return (
     <section className="panel curso">
@@ -83,9 +88,9 @@ function TarjetaCurso({ curso, onCrearGrupo }) {
       {curso.grupos.length ? (
         <div className="grupos">
           {curso.grupos.map(g => (
-            <Link key={g.id} className="grupo" to={`/grupo/${g.id}`}>
+            <Link key={g.id} className="grupo color" style={{ "--col": varColor(colorGrupo(g, todos)) }} to={`/grupo/${g.id}`}>
               <span className="nombre">{g.nombre}</span>
-              <span className="muted small">Abrir ›</span>
+              <span className="alumnos-n">{g.alumnos?.[0]?.count ?? 0} alumnos</span>
             </Link>
           ))}
         </div>
@@ -96,4 +101,9 @@ function TarjetaCurso({ curso, onCrearGrupo }) {
       </form>
     </section>
   );
+}
+
+function fechaHoy() {
+  const t = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
+  return t.charAt(0).toUpperCase() + t.slice(1);
 }

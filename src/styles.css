@@ -361,3 +361,18 @@ textarea.in.texto-largo { min-height: 40px; resize: none; overflow: hidden; line
 .selector-notas .muestra { width: 20px; height: 20px; }
 .elegir-contenido { display: flex; align-items: center; gap: 8px; flex: 1 1 240px; min-width: 0; }
 .elegir-contenido select { flex: 1; }
+
+/* ---------- Inicio con color y cambio de grupo ---------- */
+.portada { display: flex; flex-direction: column; gap: 4px; padding: 18px 18px 16px; border-radius: 14px; background: linear-gradient(120deg, var(--azul-suave), color-mix(in srgb, var(--p2) 18%, var(--superficie)) 60%, color-mix(in srgb, var(--p3) 18%, var(--superficie))); }
+.portada h2 { font-size: 28px; }
+.fecha-hoy { margin: 0; font-size: 13px; font-weight: 700; color: var(--azul); }
+.grupo.color { background: var(--col); border-color: var(--col); color: var(--papel); min-height: 76px; justify-content: space-between; }
+.grupo.color:hover { border-color: var(--tinta); filter: brightness(1.05); }
+.grupo.color .nombre { font-size: 19px; }
+.alumnos-n { font-size: 12.5px; font-weight: 700; opacity: .9; }
+.cambiar-grupo { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.cambiar-grupo button { flex: none; border: 2px solid var(--col); background: var(--superficie); color: var(--tinta); border-radius: 999px; padding: 6px 14px; font-weight: 800; font-size: 14px; cursor: pointer; min-height: 40px; }
+.cambiar-grupo button[aria-current="true"] { background: var(--col); color: var(--papel); }
+.titulo-grupo { display: inline-flex; align-items: center; gap: 10px; }
+.titulo-grupo::before { content: ""; width: 14px; height: 14px; border-radius: 4px; background: var(--col); }
+.boton-color { border: 0; cursor: pointer; width: 26px; height: 26px; border-radius: 7px; }

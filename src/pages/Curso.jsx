@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase, q, mensajeError } from "../lib/supabase.js";
 import { fmt, repeticion } from "../lib/calc.js";
 import { compararCodigo, enlaces } from "../lib/criterios.js";
-import { colorDe, varColor, N_COLORES } from "../lib/colores.js";
+import { colorDe, colorGrupo, varColor, N_COLORES } from "../lib/colores.js";
 import { Aviso, BotonBorrar, CampoEditable, Cargando, numero } from "../components/ui.jsx";
 
 const EVALS = [1, 2, 3];
@@ -19,6 +19,8 @@ export default function Curso() {
   const [abierto, setAbierto] = useState(null);
   const [error, setError] = useState("");
   const [criterios, setCriterios] = useState([]);
+  const [todosGrupos, setTodosGrupos] = useState([]);
+  const [colorAbierto, setColorAbierto] = useState(null);
 
   async function cargar() {
     try {
@@ -29,6 +31,8 @@ export default function Curso() {
       ]);
       cs.forEach(x => x.items.sort((a, b) => a.orden - b.orden));
       setCurso(c); setGrupos(g); setContenidos(cs);
+      const { data: todosG } = await supabase.from("grupos").select("*");
+      setTodosGrupos(todosG || []);
       // Criterios: si aún no se ha ejecutado 02_criterios.sql, la sección no aparece
       const { data: crs } = await supabase.from("criterios").select("id, codigo, descripcion").eq("curso_id", id);
       setCriterios((crs || []).sort((a, b) => compararCodigo(a.codigo, b.codigo)));
@@ -141,12 +145,24 @@ export default function Curso() {
           <h3>Grupos de {curso.nombre}</h3>
           {grupos.map(g => (
             <div className="fila" key={g.id}>
+              <button type="button" className="muestra boton-color" style={{ "--col": varColor(colorGrupo(g, todosGrupos.map(x => x.id === g.id ? { ...x, color: g.color } : x))) }}
+                aria-label={`Color de ${g.nombre}`} onClick={() => setColorAbierto(colorAbierto === g.id ? null : g.id)} />
               <CampoEditable valor={g.nombre} style={{ flex: "1 1 140px" }} aria-label="Nombre del grupo"
                 onGuardar={v => v.trim() && guardar("grupos", g.id, { nombre: v.trim() }, () => setGrupos(gs => gs.map(x => x.id === g.id ? { ...x, nombre: v.trim() } : x)))} />
               <Link className="btn sm" to={`/grupo/${g.id}`}>Abrir</Link>
               <BotonBorrar texto="Borrar" confirmar="Borra alumnos y notas" onConfirmar={async () => {
                 try { await q(supabase.from("grupos").delete().eq("id", g.id)); setGrupos(gs => gs.filter(x => x.id !== g.id)); } catch (e) { setError(mensajeError(e)); }
               }} />
+              {colorAbierto === g.id && (
+                <div className="paleta" role="group" aria-label={`Color de ${g.nombre}`} style={{ flexBasis: "100%" }}>
+                  {Array.from({ length: N_COLORES }, (_, k) => k + 1).map(n => (
+                    <button key={n} type="button" style={{ "--col": varColor(n) }} aria-pressed={g.color === n} aria-label={`Color ${n}`}
+                      onClick={() => guardar("grupos", g.id, { color: n }, () => { setGrupos(gs => gs.map(x => x.id === g.id ? { ...x, color: n } : x)); setColorAbierto(null); })} />
+                  ))}
+                  <button type="button" className="auto" aria-pressed={!g.color}
+                    onClick={() => guardar("grupos", g.id, { color: null }, () => { setGrupos(gs => gs.map(x => x.id === g.id ? { ...x, color: null } : x)); setColorAbierto(null); })}>Automático</button>
+                </div>
+              )}
             </div>
           ))}
           {!grupos.length && <p className="muted small" style={{ margin: 0 }}>Crea los grupos desde la pantalla de inicio.</p>}
