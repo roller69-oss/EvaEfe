@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prueba EducaMadrid Cloud · EvaEfe</title>
+<style>
+  :root { --bg:#F3F6FA; --fg:#18212F; --muted:#5A6577; --line:#D7DFEA; --ok:#26734A; --okbg:#E1F2E8; --ko:#C02E28; --kobg:#FBE8E6; --azul:#1D4CB3; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0F141C; --fg:#E5EBF4; --muted:#98A4B7; --line:#2A3443; --ok:#71CC96; --okbg:#17301F; --ko:#FF8078; --kobg:#3A1C1C; --azul:#86A9FF; color-scheme: dark; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 system-ui, sans-serif; padding:20px max(16px, env(safe-area-inset-left)); }
+  main { max-width:640px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  h1 { font-size:22px; margin:0; }
+  p { margin:0; }
+  .muted { color:var(--muted); }
+  input { width:100%; box-sizing:border-box; padding:9px 10px; border:1px solid var(--line); border-radius:8px; background:transparent; color:inherit; font:inherit; }
+  button { padding:10px 16px; border-radius:9px; border:0; background:var(--azul); color:#fff; font-weight:700; font-size:15px; cursor:pointer; align-self:flex-start; }
+  .paso { border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  .ok { background:var(--okbg); color:var(--ok); border-color:transparent; }
+  .ko { background:var(--kobg); color:var(--ko); border-color:transparent; }
+  .veredicto { font-weight:700; font-size:16px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>¿Puede EvaEfe conectar con EducaMadrid Cloud?</h1>
+  <p class="muted">Esta prueba no usa tu usuario ni tu contraseña. Solo comprueba si el servidor del Cloud deja que una web externa (esta) se conecte a él.</p>
+  <label>Dirección del Cloud<input id="url" value="https://cloud.educa.madrid.org"></label>
+  <button id="probar">Hacer la prueba</button>
+  <div id="res" style="display:flex;flex-direction:column;gap:8px"></div>
+</main>
+<script>
+const res = document.getElementById("res");
+function paso(ok, titulo, detalle) {
+  const d = document.createElement("div");
+  d.className = "paso " + (ok === true ? "ok" : ok === false ? "ko" : "");
+  d.innerHTML = "<b></b><br><span></span>";
+  d.querySelector("b").textContent = titulo;
+  d.querySelector("span").textContent = detalle;
+  res.append(d);
+}
+document.getElementById("probar").onclick = async () => {
+  res.innerHTML = "";
+  const base = document.getElementById("url").value.replace(/\/+$/, "");
+  let webdav = false;
+
+  // 1) Lectura simple: status.php
+  try {
+    const r = await fetch(base + "/status.php", { credentials: "omit" });
+    const t = await r.text();
+    let info = "";
+    try { const j = JSON.parse(t); info = `${j.productname || "?"} ${j.versionstring || ""}`; } catch { info = "respuesta recibida"; }
+    paso(true, "1. Lectura básica: permitida", `El servidor responde a webs externas (${info}).`);
+  } catch (e) {
+    paso(false, "1. Lectura básica: bloqueada", "El servidor no deja que una web externa lea sus respuestas.");
+  }
+
+  // 2) Acceso a archivos (WebDAV), que es lo que necesitaría la app
+  try {
+    const r = await fetch(base + "/remote.php/dav/", {
+      method: "PROPFIND", credentials: "omit",
+      headers: { "Depth": "0", "Content-Type": "application/xml", "Authorization": "Basic " + btoa("prueba:prueba") },
+    });
+    webdav = true;
+    paso(true, "2. Acceso a archivos (WebDAV): permitido", `El servidor aceptó la conexión (respondió ${r.status}; es normal que diga 401 porque no hemos usado tu cuenta).`);
+  } catch (e) {
+    paso(false, "2. Acceso a archivos (WebDAV): bloqueado", "El servidor no permite que una web externa acceda a los archivos. La app no podría guardar directamente en el Cloud.");
+  }
+
+  const v = document.createElement("p");
+  v.className = "veredicto";
+  v.textContent = webdav
+    ? "Resultado: parece posible conectar EvaEfe con tu Cloud. Mándale una captura de esta pantalla a Claude."
+    : "Resultado: no se puede conectar directamente. La opción viable sería guardar y abrir un archivo de EvaEfe en tu carpeta del Cloud. Mándale una captura a Claude.";
+  res.append(v);
+};
+</script>
+</body>
+</html>
