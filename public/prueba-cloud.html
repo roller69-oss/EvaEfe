@@ -18,6 +18,7 @@
   .ok { background:var(--okbg); color:var(--ok); border-color:transparent; }
   .ko { background:var(--kobg); color:var(--ko); border-color:transparent; }
   .veredicto { font-weight:700; font-size:16px; }
+  code { font-size:13px; word-break:break-all; }
 </style>
 </head>
 <body>
@@ -41,12 +42,13 @@ function paso(ok, titulo, detalle) {
 document.getElementById("probar").onclick = async () => {
   res.innerHTML = "";
   const base = document.getElementById("url").value.replace(/\/+$/, "");
-  let webdav = false;
+  let leer = false, webdav = false;
 
   // 1) Lectura simple: status.php
   try {
     const r = await fetch(base + "/status.php", { credentials: "omit" });
     const t = await r.text();
+    leer = true;
     let info = "";
     try { const j = JSON.parse(t); info = `${j.productname || "?"} ${j.versionstring || ""}`; } catch { info = "respuesta recibida"; }
     paso(true, "1. Lectura básica: permitida", `El servidor responde a webs externas (${info}).`);

@@ -128,16 +128,23 @@ export const caraANota = v => ((Number(v) - 1) / 4) * 10;
  * contenido.sesiones = ids de las sesiones de ESTE grupo.
  */
 export function notaDiario(contenido, calif) {
-  const ses = contenido.sesiones ?? [];
-  const total = ses.length;
   const vals = calif?.valores || {};
+  // Los días con falta justificada ("J") no cuentan para nada
+  const ses = (contenido.sesiones ?? []).filter(s => vals[s] !== "J");
+  const justificadas = (contenido.sesiones ?? []).length - ses.length;
+  const total = ses.length;
   const presentes = ses.filter(s => vals[s] != null && vals[s] !== "");
   const asistencia = total ? (presentes.length / total) * 100 : null;
-  const media = presentes.length ? presentes.reduce((a, s) => a + caraANota(vals[s]), 0) / presentes.length : null;
+  const suma = presentes.reduce((a, s) => a + caraANota(vals[s]), 0);
+  // falta_cero: los días sin cara cuentan 0; si no, la media es solo de los días que vino
+  const media = contenido.falta_cero
+    ? (total ? suma / total : null)
+    : (presentes.length ? suma / presentes.length : null);
   const excepcion = calif?.extra?.excepcion || null;
-  const base = { presentes: presentes.length, total, asistencia, media, excepcion, debeTrabajo: false };
+  const base = { presentes: presentes.length, total, justificadas, asistencia, media, excepcion, debeTrabajo: false };
   if (!total) return { ...base, nota: null, cuenta: false };
-  if (!excepcion && asistencia + 1e-9 < Number(contenido.min_asistencia ?? 80)) return { ...base, nota: 0, cuenta: true, debeTrabajo: true };
+  const usarMinimo = contenido.usar_minimo !== false;
+  if (usarMinimo && !excepcion && asistencia + 1e-9 < Number(contenido.min_asistencia ?? 80)) return { ...base, nota: 0, cuenta: true, debeTrabajo: true };
   return { ...base, nota: media, cuenta: media != null };
 }
 

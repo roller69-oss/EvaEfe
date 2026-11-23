@@ -15,6 +15,7 @@
   button, label.boton { padding:10px 16px; border-radius:9px; border:0; background:var(--azul); color:#fff; font-weight:700; font-size:15px; cursor:pointer; align-self:flex-start; font-family:inherit; }
   .paso { border-radius:10px; padding:10px 12px; }
   .ok { background:var(--okbg); color:var(--ok); } .ko { background:var(--kobg); color:var(--ko); }
+  pre { margin:0; white-space:pre-wrap; font-size:13px; }
 </style>
 </head>
 <body>
@@ -60,6 +61,7 @@ document.getElementById("guardar").onclick = async () => {
     try {
       manejador = await window.showSaveFilePicker({ suggestedName: "evaefe-prueba.json", types: [{ description: "EvaEfe", accept: { "application/json": [".json"] } }] });
       const w = await manejador.createWritable(); await w.write(datos); await w.close();
+      // segundo guardado sin volver a preguntar: así funcionaría "Guardar" en la app
       const w2 = await manejador.createWritable(); await w2.write(datos.replace('"prueba": true', '"prueba": "guardado dos veces"')); await w2.close();
       msg("r1", true, "Guardado directamente en la carpeta elegida (y vuelto a guardar sin preguntar). Comprueba que aparece en tu Cloud.");
     } catch (e) {

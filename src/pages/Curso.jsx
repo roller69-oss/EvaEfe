@@ -270,13 +270,24 @@ function EditorContenido({ c, abierto, onAlternar, guardar, setCont, setError, o
           {c.tipo === "diario" && (
             <div className="sub">
               <h4>Diario</h4>
+              <label className="f">Días sin cara (no vino o no hizo nada)
+                <select className="in" value={c.falta_cero ? "cero" : "nocuenta"} onChange={e => guardar({ falta_cero: e.target.value === "cero" })}>
+                  <option value="nocuenta">No cuentan: media solo de los días que vino</option>
+                  <option value="cero">Cuentan 0 en la media</option>
+                </select>
+              </label>
               <div className="fila">
-                <label className="f en-linea">Asistencia mínima
-                  <span className="pct"><CampoEditable valor={c.min_asistencia ?? 80} inputMode="decimal" style={{ width: 80 }}
+                <label className="check"><input type="checkbox" checked={c.usar_minimo !== false} onChange={e => guardar({ usar_minimo: e.target.checked })} /> Exigir asistencia mínima</label>
+                {c.usar_minimo !== false && (
+                  <span className="pct"><CampoEditable valor={c.min_asistencia ?? 80} inputMode="decimal" style={{ width: 80 }} aria-label="Asistencia mínima"
                     onGuardar={v => { const n = numero(v); if (n != null && n >= 0 && n <= 100) guardar({ min_asistencia: n }); }} /></span>
-                </label>
+                )}
               </div>
-              <p className="pista" style={{ margin: 0 }}>Cada día se valora con una cara: 😠 1 = 0 · 🙁 2 = 2,5 · 😐 3 = 5 · 🙂 4 = 7,5 · 😄 5 = 10. La nota es la media de los días que vino. Si su asistencia no llega al mínimo, el diario le cuenta 0 y debe hacer un trabajo (salvo excepción).</p>
+              <p className="pista" style={{ margin: 0 }}>
+                Caras: 😠 1 = 0 · 🙁 2 = 2,5 · 😐 3 = 5 · 🙂 4 = 7,5 · 😄 5 = 10. Con <b>J</b> (falta justificada) ese día no cuenta para nada.
+                {" "}{c.falta_cero ? "Cada día sin cara suma un 0 a la media." : "La nota es la media de los días que vino."}
+                {c.usar_minimo !== false ? ` Si su asistencia no llega al ${fmt(Number(c.min_asistencia ?? 80), 0)}%, el diario le cuenta 0 y debe hacer un trabajo (salvo excepción).` : " No se exige asistencia mínima."}
+              </p>
             </div>
           )}
 

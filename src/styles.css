@@ -387,3 +387,10 @@ textarea.in.texto-largo { min-height: 40px; resize: none; overflow: hidden; line
 .imp-fila:last-child { border-bottom: 0; }
 .imp-nombre { flex: 1 1 180px; min-width: 0; }
 .imp-fila > b, .imp-nombre > b { font-family: var(--f-num); }
+
+/* Falta justificada en el diario */
+.caras { grid-template-columns: repeat(5, 48px) 36px 36px; }
+@media (max-width: 420px) { .caras { grid-template-columns: repeat(5, 1fr) 34px 34px; } }
+.caras .btn-j { font-weight: 800; font-size: 14px; color: var(--muted); }
+.caras .btn-j[aria-pressed="true"] { background: var(--azul-suave); border-color: var(--azul); color: var(--azul); }
+.hoja td.just-celda { color: var(--azul); font-weight: 700; font-size: 12px; }

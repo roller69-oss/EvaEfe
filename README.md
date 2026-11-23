@@ -105,4 +105,5 @@ npm run dev              # http://localhost:5173
 - [x] Colores por contenido (supabase/07_colores.sql), buscador, tarjetas plegadas y alumnos terminados
 - [x] Colores por grupo (supabase/08_color_grupos.sql), portada con resumen y cambio rápido entre grupos del curso
 - [x] Importar notas de un cuestionario del aula virtual (Excel de resultados) en contenidos de nota directa
+- [x] Diario: días sin cara = 0 opcional, mínimo de asistencia opcional, falta justificada J (supabase/09_diario_opciones.sql)
 - [ ] Estadísticas por grupo y curso

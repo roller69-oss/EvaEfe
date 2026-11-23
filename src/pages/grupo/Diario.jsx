@@ -53,7 +53,7 @@ export default function Diario({ g, cont }) {
         <>
           <div className="fila">
             <h3>{fechaLarga(ses.fecha)}</h3>
-            <span className="muted small">{alumnos.length - sinCara.length}/{alumnos.length} valorados · sin cara = falta</span>
+            <span className="muted small">{alumnos.length - sinCara.length}/{alumnos.length} valorados · sin cara = {cont.falta_cero ? "0" : "falta"}</span>
             <span className="espacio" />
             {sinCara.length > 0 && <button className="btn sm" onClick={() => sinCara.forEach(a => poner(a, 5))}>Todos 😄 ({sinCara.length})</button>}
             <BotonBorrar texto="Borrar día" confirmar="Se borran sus caras" onConfirmar={() => { g.borrarSesion(ses.id); setSid(null); }} />
@@ -73,7 +73,7 @@ export default function Diario({ g, cont }) {
                     <span className="nombre"><NombreLista nombre={a.nombre} /></span>
                     <span className="resumen-diario">
                       {exento ? "Exento" : <>
-                        {r.media == null ? "—" : fmt(r.media, 1)} · {r.presentes}/{r.total}
+                        {r.media == null ? "—" : fmt(r.media, 1)} · {r.presentes}/{r.total}{r.justificadas ? ` +${r.justificadas}J` : ""}
                         {r.debeTrabajo && <b className="rojo"> · trabajo</b>}
                         {r.excepcion && <span title={r.excepcion}> · excepción</span>}
                       </>}
@@ -86,6 +86,7 @@ export default function Diario({ g, cont }) {
                           <span className="emoji" aria-hidden="true">{e}</span><span className="n">{n}</span>
                         </button>
                       ))}
+                      <button type="button" className="btn-j" aria-pressed={v === "J"} onClick={() => poner(a, "J")} title="Falta justificada: este día no cuenta">J</button>
                       <button type="button" className={`btn-nota ${nota ? "con-nota" : ""}`} aria-label="Nota del día" title={nota || "Añadir nota del día"}
                         onClick={() => setNotaAbierta(notaAbierta === a.id ? null : a.id)}>✎</button>
                     </div>
@@ -99,7 +100,7 @@ export default function Diario({ g, cont }) {
               );
             })}
           </div>
-          <p className="pista">Toca otra vez una cara para quitarla. Sin cara = falta ese día (no baja la media, cuenta para el mínimo de asistencia del {fmt(Number(cont.min_asistencia ?? 80), 0)}%).</p>
+          <p className="pista">Toca otra vez una cara para quitarla. Sin cara = {cont.falta_cero ? "cuenta 0 en la media" : "no cuenta en la media"}{cont.usar_minimo !== false ? ` y cuenta como falta para el mínimo del ${fmt(Number(cont.min_asistencia ?? 80), 0)}%` : ""}. <b>J</b> = falta justificada: ese día no cuenta para nada.</p>
         </>
       )}
     </div>

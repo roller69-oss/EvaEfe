@@ -23,7 +23,7 @@ export default function DiarioSeguimiento({ g, cont }) {
     <section className="panel seguimiento">
       <div className="fila">
         <h3>{cont.nombre}</h3>
-        <span className="muted small">{sesiones.length} día(s) · mínimo {fmt(Number(cont.min_asistencia ?? 80), 0)}% de asistencia</span>
+        <span className="muted small">{sesiones.length} día(s) · {cont.usar_minimo !== false ? `mínimo ${fmt(Number(cont.min_asistencia ?? 80), 0)}% de asistencia` : "sin mínimo de asistencia"} · sin cara = {cont.falta_cero ? "0" : "no cuenta"}</span>
         <span className="espacio" />
         {sesiones.length > 0 && <button className="btn sm" onClick={() => setDetalle(!detalle)}>{detalle ? "Ocultar días" : "Ver día a día"}</button>}
       </div>
@@ -99,8 +99,8 @@ export default function DiarioSeguimiento({ g, cont }) {
                   {sesiones.map(s => {
                     const v = c?.valores?.[s.id];
                     const nota = c?.extra?.notas_dia?.[s.id];
-                    return <td key={s.id} className={v == null ? "falta-celda" : ""} title={nota || (v == null ? "Falta" : "")}>
-                      {v == null ? "F" : <>{cara(v)}<small> {v}</small></>}{nota && <sup>✎</sup>}
+                    return <td key={s.id} className={v == null ? "falta-celda" : v === "J" ? "just-celda" : ""} title={nota || (v == null ? "Falta" : v === "J" ? "Falta justificada" : "")}>
+                      {v == null ? "F" : v === "J" ? "J" : <>{cara(v)}<small> {v}</small></>}{nota && <sup>✎</sup>}
                     </td>;
                   })}
                   <td className={`calc ${r.media != null && r.media < 5 ? "suspenso" : ""}`}>{r.media == null ? "—" : fmt(r.media)}</td>
