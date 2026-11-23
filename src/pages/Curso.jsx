@@ -4,6 +4,7 @@ import { supabase, q, mensajeError } from "../lib/supabase.js";
 import { fmt, repeticion } from "../lib/calc.js";
 import { compararCodigo, enlaces } from "../lib/criterios.js";
 import { colorDe, colorGrupo, varColor, N_COLORES } from "../lib/colores.js";
+import MapaEvaluacion from "./MapaEvaluacion.jsx";
 import { Aviso, BotonBorrar, CampoEditable, Cargando, numero } from "../components/ui.jsx";
 
 const EVALS = [1, 2, 3];
@@ -17,6 +18,8 @@ export default function Curso() {
   const [contenidos, setContenidos] = useState([]);
   const [ev, setEv] = useState(1);
   const [abierto, setAbierto] = useState(null);
+  const [vistaCont, setVistaCont] = useState("contenidos"); // contenidos | mapa
+  const [competencias, setCompetencias] = useState([]);
   const [error, setError] = useState("");
   const [criterios, setCriterios] = useState([]);
   const [todosGrupos, setTodosGrupos] = useState([]);
@@ -34,8 +37,12 @@ export default function Curso() {
       const { data: todosG } = await supabase.from("grupos").select("*");
       setTodosGrupos(todosG || []);
       // Criterios: si aún no se ha ejecutado 02_criterios.sql, la sección no aparece
-      const { data: crs } = await supabase.from("criterios").select("id, codigo, descripcion").eq("curso_id", id);
+      const [{ data: crs }, { data: ces }] = await Promise.all([
+        supabase.from("criterios").select("*").eq("curso_id", id),
+        supabase.from("competencias").select("*").eq("curso_id", id),
+      ]);
       setCriterios((crs || []).sort((a, b) => compararCodigo(a.codigo, b.codigo)));
+      setCompetencias((ces || []).sort((a, b) => compararCodigo(a.codigo, b.codigo)));
     } catch (e) { setError(mensajeError(e)); }
   }
   useEffect(() => { cargar(); }, [id]);
@@ -81,11 +88,24 @@ export default function Curso() {
       <section className="bloque">
         <div className="fila">
           <h2>Contenidos</h2>
-          <span className="espacio" />
-          <div className="seg" role="group" aria-label="Evaluación">
-            {EVALS.map(e => <button key={e} type="button" aria-pressed={ev === e} onClick={() => setEv(e)}>{e}ª Ev.</button>)}
+          <div className="seg" role="group" aria-label="Vista">
+            <button type="button" aria-pressed={vistaCont === "contenidos"} onClick={() => setVistaCont("contenidos")}>Contenidos y pesos</button>
+            <button type="button" aria-pressed={vistaCont === "mapa"} onClick={() => setVistaCont("mapa")}>Mapa de evaluación</button>
           </div>
+          <span className="espacio" />
+          {vistaCont === "contenidos" && (
+            <div className="seg" role="group" aria-label="Evaluación">
+              {EVALS.map(e => <button key={e} type="button" aria-pressed={ev === e} onClick={() => setEv(e)}>{e}ª Ev.</button>)}
+            </div>
+          )}
         </div>
+
+        {vistaCont === "mapa" && (
+          <MapaEvaluacion competencias={competencias} criterios={criterios} contenidos={contenidos}
+            onEditar={c => { setEv(Number(c.evaluacion)); setAbierto(c.id); setVistaCont("contenidos"); }} />
+        )}
+
+        {vistaCont === "contenidos" && <>
 
         {deEsta.length ? (
           <>
@@ -124,6 +144,7 @@ export default function Curso() {
           <button className="btn" onClick={() => nuevoContenido("nota")}>+ Nota directa</button>
           <button className="btn" onClick={() => nuevoContenido("diario")}>+ Diario</button>
         </div>
+        </>}
       </section>
 
       <div className="rejilla">
@@ -208,6 +229,7 @@ function EditorContenido({ c, abierto, onAlternar, guardar, setCont, setError, o
         <span className="muestra" aria-hidden="true" />
         <span className="nombre">{c.nombre}</span>
         <span className="chip">{c.tipo === "nota" ? "Nota directa" : c.tipo === "diario" ? "Diario" : `Rúbrica · ${c.items.length} ítem${c.items.length === 1 ? "" : "s"}`}</span>
+        {c.previsto && <span className="chip previsto-chip">Previsto</span>}
         <span className="peso">{fmt(Number(c.peso), 0)}%</span>
         <span className="flecha" aria-hidden="true">{abierto ? "▾" : "▸"}</span>
       </button>
@@ -290,6 +312,11 @@ function EditorContenido({ c, abierto, onAlternar, guardar, setCont, setError, o
               </p>
             </div>
           )}
+
+          <label className="check previsto-check">
+            <input type="checkbox" checked={Boolean(c.previsto)} onChange={e => guardar({ previsto: e.target.checked })} />
+            <span>Previsto <span className="muted small">— planificado, todavía no se evalúa (no sale en los grupos)</span></span>
+          </label>
 
           <div className="paleta" role="group" aria-label="Color del contenido">
             <span className="small muted">Color</span>

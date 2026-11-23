@@ -17,6 +17,10 @@ export function useGrupo(id) {
         q(supabase.from("contenidos").select("*, items(*)").eq("curso_id", grupo.curso_id).order("orden").order("created_at")),
       ]);
       contenidos.forEach(c => c.items.sort((a, b) => a.orden - b.orden));
+      // Fija el color automático antes de quitar los previstos, para que coincida con el del curso
+      contenidos.forEach((c, i) => { if (!(c.color >= 1 && c.color <= 8)) c.color = (i % 8) + 1; });
+      // Los contenidos "previstos" son de planificación: no se evalúan todavía en los grupos
+      for (let i = contenidos.length - 1; i >= 0; i--) if (contenidos[i].previsto) contenidos.splice(i, 1);
       const ids = alumnos.map(a => a.id);
       const [califs, ajustes] = ids.length
         ? await Promise.all([
