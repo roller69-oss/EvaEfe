@@ -1,0 +1,41 @@
+name: Mantener Supabase activo
+
+# 1) El plan gratuito de Supabase pausa el proyecto tras 7 días sin actividad
+#    (Navidad, Semana Santa, verano). Esta tarea hace una consulta mínima cada 3 días.
+#    Con RLS no devuelve ningún dato: solo cuenta como actividad.
+# 2) GitHub desactiva las tareas programadas si el repositorio pasa 60 días sin cambios.
+#    Si han pasado más de 40 días desde el último commit, esta tarea guarda la fecha
+#    en .github/keepalive.txt para que el repositorio tenga actividad.
+on:
+  schedule:
+    - cron: "17 7 */3 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consulta mínima a Supabase
+        run: |
+          curl -sS -o /dev/null -w "HTTP %{http_code}\n" \
+            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/cursos?select=id&limit=1" \
+            -H "apikey: ${{ secrets.VITE_SUPABASE_ANON_KEY }}"
+
+      - uses: actions/checkout@v4
+
+      - name: Mantener activo el repositorio (cada 40 días sin cambios)
+        run: |
+          ultimo=$(git log -1 --format=%ct)
+          dias=$(( ($(date +%s) - ultimo) / 86400 ))
+          echo "Días desde el último commit: $dias"
+          if [ "$dias" -ge 40 ]; then
+            date -u +%F > .github/keepalive.txt
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git add .github/keepalive.txt
+            git commit -m "Mantener activas las tareas programadas"
+            git push
+          fi
