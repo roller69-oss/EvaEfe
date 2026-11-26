@@ -6,6 +6,7 @@ import Inicio from "./pages/Inicio.jsx";
 import Curso from "./pages/Curso.jsx";
 import Grupo from "./pages/Grupo.jsx";
 import Criterios from "./pages/Criterios.jsx";
+import IrA from "./components/IrA.jsx";
 
 export default function App() {
   const [sesion, setSesion] = useState(undefined); // undefined = comprobando
@@ -45,6 +46,7 @@ export default function App() {
             <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" fill="var(--azul)" /><path d="M7 12.5l3 3 7-7" fill="none" stroke="var(--superficie)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
             EvaEfe
           </Link>
+          <IrA />
           <span className="espacio" />
           <span className="muted small usuario">{sesion.user.email}</span>
           <button className="btn sm fantasma" onClick={() => supabase.auth.signOut()}>Salir</button>

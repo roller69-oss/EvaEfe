@@ -421,3 +421,32 @@ textarea.in.texto-largo { min-height: 40px; resize: none; overflow: hidden; line
 .leyenda-ce { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; }
 .leyenda-ce .muestra { width: 10px; height: 10px; vertical-align: 0; }
 .leyenda-ce b { font-family: var(--f-num); }
+
+/* ---------- Nombres largos en tablas y listas ---------- */
+.hoja tbody .fija { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.25; }
+@media (max-width: 560px) {
+  .hoja .fija { min-width: 128px; max-width: 160px; font-size: 13px; padding: 6px 8px; }
+  .hoja .fija .num { display: none; }
+}
+textarea.in.nombre-alumno { font-weight: 700; border-color: transparent; background: transparent; }
+textarea.in.nombre-alumno:hover { border-color: var(--linea); }
+textarea.in.nombre-alumno:focus { background: var(--papel); }
+
+/* ---------- Nota directa en la línea plegada ---------- */
+.tarjeta-plegada { padding: 4px 8px 4px 4px; }
+.abrir-tarjeta { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; background: none; border: 0; padding: 4px 6px; min-height: 40px; text-align: left; font: inherit; color: inherit; cursor: pointer; border-radius: 8px; }
+.abrir-tarjeta:focus-visible { outline: 2px solid var(--azul); }
+.nota-rapida { width: 72px; min-height: 40px; text-align: center; font-family: var(--f-num); font-weight: 700; font-size: 17px; background: var(--papel); padding: 4px 6px; flex: none; }
+.nota-rapida.suspenso { color: var(--rojo); }
+.nota-rapida.mal { border-color: var(--rojo); box-shadow: 0 0 0 3px var(--rojo-suave); }
+
+/* ---------- Menú Cursos y grupos ---------- */
+.ir-a { position: relative; }
+.ir-a-panel { position: absolute; left: 0; top: calc(100% + 6px); z-index: 20; width: min(360px, calc(100vw - 32px)); max-height: 70vh; overflow: auto; background: var(--superficie); border: 1px solid var(--linea); border-radius: 12px; box-shadow: 0 10px 30px rgba(10, 15, 25, .18); padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+@media (max-width: 480px) { .ir-a { position: static; } .ir-a-panel { left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); width: auto; top: 56px; } }
+.ir-a-curso { display: flex; flex-direction: column; gap: 6px; }
+.ir-a-grupos { display: flex; flex-wrap: wrap; gap: 6px; }
+.ir-a-grupo { border: 2px solid var(--col); color: var(--tinta); background: var(--superficie); border-radius: 999px; padding: 5px 12px; font-weight: 800; font-size: 14px; text-decoration: none; min-height: 36px; display: inline-flex; align-items: center; }
+.ir-a-grupo[aria-current="page"] { background: var(--col); color: var(--papel); }
+.enlace-small { font-size: 13px; font-weight: 700; text-decoration: none; }
+.cabecera .barra { position: relative; }

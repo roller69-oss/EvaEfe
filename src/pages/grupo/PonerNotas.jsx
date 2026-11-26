@@ -149,15 +149,20 @@ function TarjetaAlumno({ alumno, n, cont, calif, guardar, abierto, onAlternar, f
   const aeCerrada = asistenciaExamen(cont, calif);
 
   if (!abierto) {
+    // Nota directa: se escribe aquí mismo; la tarjeta solo se abre para algo distinto (trabajo, exento, repetir…)
+    const rapida = cont.tipo === "nota" && estado === "normal" && extraIntentos.length === 0;
     return (
-      <button type="button" className={`tarjeta-plegada estado-${estado} ${finalizado ? "finalizada" : ""}`} onClick={onAlternar} aria-expanded="false">
-        <span className="num">{n}</span>
-        <span className="nombre"><NombreLista nombre={alumno.nombre} /></span>
-        {aeCerrada === "pendiente" && <span className="punto pendiente" title="Vino, pendiente de evaluar" />}
-        {aeCerrada === "falta" && <span className="punto falta" title="Faltó al examen" />}
-        {chip}
+      <div className={`tarjeta-plegada estado-${estado} ${finalizado ? "finalizada" : ""}`}>
+        <button type="button" className="abrir-tarjeta" onClick={onAlternar} aria-expanded="false" aria-label={`Abrir ${alumno.nombre}`}>
+          <span className="num">{n}</span>
+          <span className="nombre"><NombreLista nombre={alumno.nombre} /></span>
+          {aeCerrada === "pendiente" && <span className="punto pendiente" title="Vino, pendiente de evaluar" />}
+          {aeCerrada === "falta" && <span className="punto falta" title="Faltó al examen" />}
+          {!rapida && chip}
+        </button>
+        {rapida && <NotaRapida valor={calif?.nota ?? null} nombre={alumno.nombre} onGuardar={x => guardar({ nota: x })} />}
         <span className={`check-fin ${finalizado ? "si" : ""}`} aria-label={finalizado ? "Terminado" : "Sin terminar"}>{finalizado ? "✓" : ""}</span>
-      </button>
+      </div>
     );
   }
 
@@ -383,5 +388,34 @@ function PasarLista({ g, cont }) {
         </div>
       )}
     </div>
+  );
+}
+
+/** Casilla de nota directa en la línea plegada. Intro guarda y salta al siguiente alumno. */
+function NotaRapida({ valor, nombre, onGuardar }) {
+  const texto = valor == null ? "" : String(valor).replace(".", ",");
+  const [v, setV] = useState(texto);
+  const [mal, setMal] = useState(false);
+  useEffect(() => { setV(texto); }, [texto]);
+  const guardarSiCambia = () => {
+    if (v.trim() === texto) { setMal(false); return true; }
+    const x = numero(v);
+    if (v.trim() !== "" && (x == null || x < 0 || x > 10)) { setMal(true); return false; }
+    setMal(false); onGuardar(v.trim() === "" ? null : x); return true;
+  };
+  return (
+    <input className={`in nota-rapida ${mal ? "mal" : ""} ${valor != null && valor < 5 ? "suspenso" : ""}`} inputMode="decimal" enterKeyHint="next"
+      value={v} placeholder="—" aria-label={`Nota de ${nombre}`} title={mal ? "La nota debe estar entre 0 y 10" : undefined}
+      onChange={e => setV(e.target.value)} onFocus={e => e.target.select()} onBlur={guardarSiCambia}
+      onKeyDown={e => {
+        if (e.key === "Escape") { setV(texto); setMal(false); }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (!guardarSiCambia()) return;
+          const todas = [...document.querySelectorAll(".nota-rapida")];
+          const sig = todas[todas.indexOf(e.currentTarget) + 1];
+          if (sig) sig.focus(); else e.currentTarget.blur();
+        }
+      }} />
   );
 }

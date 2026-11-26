@@ -107,4 +107,5 @@ npm run dev              # http://localhost:5173
 - [x] Importar notas de un cuestionario del aula virtual (Excel de resultados) en contenidos de nota directa
 - [x] Diario: días sin cara = 0 opcional, mínimo de asistencia opcional, falta justificada J (supabase/09_diario_opciones.sql)
 - [x] Mapa de evaluación por curso y contenidos previstos (supabase/10_previstos.sql)
+- [x] Nota directa sin abrir la tarjeta, nombres largos visibles en el móvil y menú «Cursos y grupos» en la cabecera
 - [ ] Estadísticas por grupo y curso

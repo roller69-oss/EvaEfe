@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase, q, mensajeError } from "../../lib/supabase.js";
-import { BotonBorrar, CampoEditable } from "../../components/ui.jsx";
+import { BotonBorrar, CampoEditable, TextoEditable } from "../../components/ui.jsx";
 import { leerListado, nombresDeColumna, normalizar } from "../../lib/importar.js";
 
 export default function Alumnos({ g }) {
@@ -46,7 +46,7 @@ export default function Alumnos({ g }) {
           {alumnos.map((a, i) => (
             <div className="alumno" key={a.id}>
               <span className="num">{i + 1}</span>
-              <CampoEditable valor={a.nombre} aria-label="Nombre" onGuardar={v => guardar(a, { nombre: v.trim() || a.nombre })} />
+              <TextoEditable valor={a.nombre} className="in texto-largo nombre-alumno" aria-label="Nombre" onGuardar={v => guardar(a, { nombre: v.replace(/\s+/g, " ").trim() || a.nombre })} />
               <CampoEditable valor={a.observaciones} className="in obs" placeholder="Observaciones" aria-label="Observaciones" onGuardar={v => guardar(a, { observaciones: v.trim() })} />
               <BotonBorrar texto="Quitar" confirmar="Borra sus notas" onConfirmar={async () => {
                 try { await q(supabase.from("alumnos").delete().eq("id", a.id)); g.setAlumnos(as => as.filter(x => x.id !== a.id)); } catch (e) { g.setError(mensajeError(e)); }
