@@ -6,6 +6,7 @@ import Inicio from "./pages/Inicio.jsx";
 import Curso from "./pages/Curso.jsx";
 import Grupo from "./pages/Grupo.jsx";
 import Criterios from "./pages/Criterios.jsx";
+import RevisarRaices from "./pages/RevisarRaices.jsx";
 import IrA from "./components/IrA.jsx";
 
 export default function App() {
@@ -58,6 +59,7 @@ export default function App() {
           <Route path="/curso/:id" element={<Curso />} />
           <Route path="/curso/:id/criterios" element={<Criterios />} />
           <Route path="/grupo/:id" element={<Grupo />} />
+          <Route path="/revisar" element={<RevisarRaices />} />
           <Route path="*" element={<Inicio />} />
         </Routes>
       </main>

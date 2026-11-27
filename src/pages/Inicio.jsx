@@ -45,6 +45,12 @@ export default function Inicio() {
         <h2>Mis cursos</h2>
         <p className="muted" style={{ margin: 0 }}>{cursos.length} curso{cursos.length === 1 ? "" : "s"} · {cursos.reduce((n, c) => n + c.grupos.length, 0)} grupos · {cursos.reduce((n, c) => n + c.grupos.reduce((m, g) => m + (g.alumnos?.[0]?.count ?? 0), 0), 0)} alumnos</p>
       </div>
+      {cursos.length > 0 && (
+        <div className="fila">
+          <Link className="btn" to="/revisar">Revisar notas con Raíces</Link>
+          <span className="pista">Comprueba con el Excel de Raíces que has pasado bien las notas.</span>
+        </div>
+      )}
       {!cursos.length && (
         <div className="vacio">
           <p>Empieza creando tus cursos, por ejemplo <b>3º ESO</b> y <b>1º Bachillerato</b>. Cada curso tiene sus contenidos y porcentajes, y dentro creas sus grupos.</p>

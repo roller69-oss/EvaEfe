@@ -11,36 +11,7 @@ export function useGrupo(id) {
   const cargar = useCallback(async () => {
     setD(null);
     try {
-      const grupo = await q(supabase.from("grupos").select("*, cursos(*)").eq("id", id).single());
-      const [alumnos, contenidos] = await Promise.all([
-        q(supabase.from("alumnos").select("*").eq("grupo_id", id).order("orden").order("created_at")),
-        q(supabase.from("contenidos").select("*, items(*)").eq("curso_id", grupo.curso_id).order("orden").order("created_at")),
-      ]);
-      contenidos.forEach(c => c.items.sort((a, b) => a.orden - b.orden));
-      // Fija el color automático antes de quitar los previstos, para que coincida con el del curso
-      contenidos.forEach((c, i) => { if (!(c.color >= 1 && c.color <= 8)) c.color = (i % 8) + 1; });
-      // Los contenidos "previstos" son de planificación: no se evalúan todavía en los grupos
-      for (let i = contenidos.length - 1; i >= 0; i--) if (contenidos[i].previsto) contenidos.splice(i, 1);
-      const ids = alumnos.map(a => a.id);
-      const [califs, ajustes] = ids.length
-        ? await Promise.all([
-            q(supabase.from("calificaciones").select("*").in("alumno_id", ids)),
-            q(supabase.from("ajustes_boletin").select("*").in("alumno_id", ids)),
-          ])
-        : [[], []];
-      const cal = {};
-      for (const c of califs) (cal[c.alumno_id] ||= {})[c.contenido_id] = c;
-      const aj = {};
-      for (const a of ajustes) (aj[a.alumno_id] ||= {})[a.evaluacion] = a;
-      // Criterios y competencias (vacío si aún no se ejecutó 02_criterios.sql)
-      const [{ data: competencias }, { data: criterios }] = await Promise.all([
-        supabase.from("competencias").select("*").eq("curso_id", grupo.curso_id),
-        supabase.from("criterios").select("*").eq("curso_id", grupo.curso_id),
-      ]);
-      // Días del diario de este grupo (vacío si aún no se ejecutó 03_diario.sql)
-      const { data: sesiones } = await supabase.from("sesiones_diario").select("id, contenido_id, fecha").eq("grupo_id", id).order("fecha");
-      const { data: todosGrupos } = await supabase.from("grupos").select("*");
-      setD({ grupo, todosGrupos: todosGrupos || [], curso: grupo.cursos, alumnos, contenidos: conTerminados(conSesiones(contenidos, sesiones || []), grupo.terminados), sesiones: sesiones || [], cal, aj, competencias: competencias || [], criterios: criterios || [] });
+      setD(await cargarDatosGrupo(id));
     } catch (e) { setError(mensajeError(e)); }
   }, [id]);
 
@@ -135,6 +106,40 @@ export function useGrupo(id) {
   }, []);
 
   return { d, error, setError, cargar, setAlumnos, guardarCalif, guardarAjuste, guardando, crearSesion, borrarSesion, alternarTerminado };
+}
+
+/** Carga todo lo de un grupo (también lo usa la revisión con Raíces). Lanza el error de Supabase. */
+export async function cargarDatosGrupo(id) {
+  const grupo = await q(supabase.from("grupos").select("*, cursos(*)").eq("id", id).single());
+  const [alumnos, contenidos] = await Promise.all([
+    q(supabase.from("alumnos").select("*").eq("grupo_id", id).order("orden").order("created_at")),
+    q(supabase.from("contenidos").select("*, items(*)").eq("curso_id", grupo.curso_id).order("orden").order("created_at")),
+  ]);
+  contenidos.forEach(c => c.items.sort((a, b) => a.orden - b.orden));
+  // Fija el color automático antes de quitar los previstos, para que coincida con el del curso
+  contenidos.forEach((c, i) => { if (!(c.color >= 1 && c.color <= 8)) c.color = (i % 8) + 1; });
+  // Los contenidos "previstos" son de planificación: no se evalúan todavía en los grupos
+  for (let i = contenidos.length - 1; i >= 0; i--) if (contenidos[i].previsto) contenidos.splice(i, 1);
+  const ids = alumnos.map(a => a.id);
+  const [califs, ajustes] = ids.length
+    ? await Promise.all([
+        q(supabase.from("calificaciones").select("*").in("alumno_id", ids)),
+        q(supabase.from("ajustes_boletin").select("*").in("alumno_id", ids)),
+      ])
+    : [[], []];
+  const cal = {};
+  for (const c of califs) (cal[c.alumno_id] ||= {})[c.contenido_id] = c;
+  const aj = {};
+  for (const a of ajustes) (aj[a.alumno_id] ||= {})[a.evaluacion] = a;
+  // Criterios y competencias (vacío si aún no se ejecutó 02_criterios.sql)
+  const [{ data: competencias }, { data: criterios }] = await Promise.all([
+    supabase.from("competencias").select("*").eq("curso_id", grupo.curso_id),
+    supabase.from("criterios").select("*").eq("curso_id", grupo.curso_id),
+  ]);
+  // Días del diario de este grupo (vacío si aún no se ejecutó 03_diario.sql)
+  const { data: sesiones } = await supabase.from("sesiones_diario").select("id, contenido_id, fecha").eq("grupo_id", id).order("fecha");
+  const { data: todosGrupos } = await supabase.from("grupos").select("*");
+  return { grupo, todosGrupos: todosGrupos || [], curso: grupo.cursos, alumnos, contenidos: conTerminados(conSesiones(contenidos, sesiones || []), grupo.terminados), sesiones: sesiones || [], cal, aj, competencias: competencias || [], criterios: criterios || [] };
 }
 
 /** Marca en cada contenido si está dado por terminado en este grupo. */

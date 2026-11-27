@@ -450,3 +450,12 @@ textarea.in.nombre-alumno:focus { background: var(--papel); }
 .ir-a-grupo[aria-current="page"] { background: var(--col); color: var(--papel); }
 .enlace-small { font-size: 13px; font-weight: 700; text-decoration: none; }
 .cabecera .barra { position: relative; }
+
+/* Revisar con Raíces */
+.hoja tr.rev-distinta td:not(.fija) { background: var(--rojo-suave); }
+.hoja tr.rev-revisar td:not(.fija) { background: var(--ambar-suave); }
+.hoja td.rev-texto { text-align: left; font-family: var(--f-texto); font-weight: 700; white-space: nowrap; }
+.hoja tr.rev-ok td.rev-texto { color: var(--verde); }
+.hoja tr.rev-distinta td.rev-texto { color: var(--rojo); }
+.hoja tr.rev-revisar td.rev-texto { color: var(--ambar); }
+div.f { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 700; color: var(--muted); min-width: 0; }
